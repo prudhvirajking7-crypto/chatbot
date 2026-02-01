@@ -28,208 +28,136 @@ st.markdown("""
     [data-testid="stSidebar"] {display: none !important;}
     section[data-testid="stSidebarNav"] {display: none !important;}
     
+    /* Global scroll fix */
+    html, body {
+        overflow-x: hidden !important;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
     /* Main background - WhatsApp Web pattern */
     .stApp {
         background-color: #0c1317;
-        background-image: 
-            radial-gradient(at 20% 30%, rgba(0, 168, 132, 0.05) 0px, transparent 50%),
-            radial-gradient(at 80% 70%, rgba(0, 92, 75, 0.05) 0px, transparent 50%);
     }
     
     /* Container */
-    .main {
-        padding: 0 !important;
-    }
-    
     .block-container {
         padding: 0 !important;
         max-width: 100% !important;
+        overflow-x: hidden !important;
     }
     
-    /* Header */
+    /* Header - Modern WhatsApp Navbar */
     h1 {
         background-color: #202c33 !important;
-        background-image: none !important;
-        color: #ffffff !important;
-        padding: 1.25rem 2rem !important;
+        color: #e9edef !important;
+        padding: 1rem 2rem !important;
         margin: 0 !important;
-        font-size: 1.5rem !important;
-        font-weight: 700 !important;
+        font-size: 1.4rem !important;
+        font-weight: 600 !important;
         border-bottom: 1px solid #2a3942 !important;
-        text-align: left !important;
-        display: flex !important;
-        align-items: center !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
     }
     
-    /* Message bubbles - Forced Contrast */
+    /* Message bubbles - Forced Contrast & Shape */
     div[data-testid="stChatMessageContent"] {
-        padding: 0.8rem 1.2rem !important;
-        border-radius: 12px !important;
-        max-width: 75% !important;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4) !important;
+        padding: 10px 15px !important;
+        border-radius: 15px !important;
+        max-width: 80% !important;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4) !important;
+        border: none !important;
     }
     
-    /* User: Vibrant WhatsApp Green with Pure White Text */
+    /* User: Vibrant Green with Crisp White Text */
+    [data-testid="stChatMessage"]:has([aria-label="user"]) {
+        flex-direction: row-reverse !important;
+        text-align: right !important;
+    }
+    
     [data-testid="stChatMessage"]:has([aria-label="user"]) [data-testid="stChatMessageContent"] {
-        background: #008069 !important;
-        color: #ffffff !important;
-        border-bottom-right-radius: 2px !important;
+        background: #005c4b !important;
+        color: #e9edef !important;
+        margin-left: auto !important;
+        border-top-right-radius: 0px !important;
     }
     
     /* Assistant: Clear Gray with Crisp White Text */
     [data-testid="stChatMessage"]:has([aria-label="assistant"]) [data-testid="stChatMessageContent"] {
         background: #202c33 !important;
-        color: #ffffff !important;
-        border-bottom-left-radius: 2px !important;
+        color: #e9edef !important;
+        margin-right: auto !important;
+        border-top-left-radius: 0px !important;
     }
     
-    /* Force all text inside bubbles to be visible */
+    /* Force all text inside bubbles to be 100% visible */
     [data-testid="stChatMessageContent"] p, 
     [data-testid="stChatMessageContent"] span,
-    [data-testid="stChatMessageContent"] li {
-        color: #ffffff !important;
-        font-size: 16px !important;
+    [data-testid="stChatMessageContent"] li,
+    [data-testid="stChatMessageContent"] div {
+        color: #e9edef !important;
+        font-size: 15.5px !important;
+        line-height: 1.5 !important;
         font-weight: 400 !important;
-        line-height: 1.6 !important;
     }
 
-    
-    /* Chat input container */
-    .stChatInputContainer {
-        background: linear-gradient(180deg, #1f2c33 0%, #151f24 100%) !important;
-        padding: 1.2rem 2rem !important;
-        border-top: 1px solid #2a3942 !important;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
-        position: sticky !important;
-        bottom: 0 !important;
+    /* Markdown Specifics */
+    [data-testid="stChatMessageContent"] strong {
+        color: #ffffff !important;
+        font-weight: 700 !important;
     }
-    
-    /* Chat input field */
-    .stChatInput {
-        max-width: 100% !important;
-    }
-    
-    .stChatInput > div {
-        background: #2a3942 !important;
-        border-radius: 10px !important;
-        border: 1px solid #3d4a52 !important;
-        transition: all 0.2s ease !important;
-    }
-    
-    .stChatInput > div:focus-within {
-        border-color: #00a884 !important;
-        box-shadow: 0 0 0 2px rgba(0, 168, 132, 0.1) !important;
-    }
-    
-    textarea {
-        background: transparent !important;
+
+    [data-testid="stChatMessageContent"] ul, [data-testid="stChatMessageContent"] ol {
+        margin-left: 20px !important;
+        padding-left: 0px !important;
         color: #e9edef !important;
-        border: none !important;
-        font-size: 15px !important;
-        padding: 12px 16px !important;
-        min-height: 44px !important;
+    }
+
+    [data-testid="stChatMessageContent"] li {
+        margin-bottom: 5px !important;
     }
     
-    textarea::placeholder {
-        color: #8696a0 !important;
+    /* Chat input container - Fixing visibility and colors */
+    [data-testid="stChatInput"] {
+        background-color: #202c33 !important;
+        border-radius: 10px !important;
+        padding: 5px !important;
     }
-    
-    textarea:focus {
-        outline: none !important;
-        box-shadow: none !important;
-    }
-    
-    /* Info/Alert styling */
-    .stAlert {
-        background: rgba(31, 44, 51, 0.6) !important;
-        backdrop-filter: blur(10px) !important;
-        color: #8696a0 !important;
-        border: 1px solid #2a3942 !important;
-        border-left: 3px solid #00a884 !important;
+
+    [data-testid="stChatInput"] textarea {
+        background-color: #2a3942 !important;
+        color: #ffffff !important;
+        font-size: 16px !important;
         border-radius: 8px !important;
-        padding: 1rem !important;
-        margin: 1rem 2rem !important;
-        font-size: 14px !important;
-    }
-    
-    /* Expander for sources */
-    .streamlit-expanderHeader {
-        background: rgba(42, 57, 66, 0.5) !important;
         border: 1px solid #3d4a52 !important;
-        border-radius: 6px !important;
-        color: #8696a0 !important;
-        font-size: 13px !important;
-        padding: 0.5rem 0.75rem !important;
-        margin-top: 0.5rem !important;
     }
-    
-    .streamlit-expanderHeader:hover {
-        background: rgba(42, 57, 66, 0.8) !important;
-        border-color: #00a884 !important;
+
+    /* Fixed white background issue */
+    .stChatInputContainer {
+        background-color: #0c1317 !important;
+        padding: 20px !important;
+        border-top: 1px solid #2a3942 !important;
     }
-    
-    .streamlit-expanderContent {
-        background: rgba(31, 44, 51, 0.5) !important;
-        border: 1px solid #3d4a52 !important;
-        border-top: none !important;
-        border-radius: 0 0 6px 6px !important;
-        padding: 0.75rem !important;
-    }
-    
-    /* Captions in expander */
-    .stCaptionContainer {
-        color: #8696a0 !important;
-        font-size: 13px !important;
-        line-height: 1.4 !important;
-        margin-bottom: 0.5rem !important;
-    }
-    
-    /* Avatar icons */
-    [data-testid="chatAvatarIcon-user"],
-    [data-testid="chatAvatarIcon-assistant"] {
-        display: none !important;
-    }
-    
+
     /* Scrollbar */
     ::-webkit-scrollbar {
-        width: 8px;
+        width: 6px;
     }
-    
-    ::-webkit-scrollbar-track {
-        background: #0c1317;
-    }
-    
     ::-webkit-scrollbar-thumb {
-        background: #2a3942;
-        border-radius: 4px;
+        background: #374045;
+        border-radius: 3px;
     }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: #3d4a52;
+
+    /* Hide Avatars for true Minimal Chatbot look */
+    [data-testid="chatAvatarIcon-user"],
+    [data-testid="chatAvatarIcon-assistant"],
+    [data-testid="stChatMessageAvatar"] {
+        display: none !important;
     }
-    
-    /* Mobile responsive */
+
     @media (max-width: 768px) {
-        h1 {
-            padding: 1rem 1.5rem;
-            font-size: 1.1rem;
-        }
-        
-        .stChatMessage {
-            padding: 0.5rem 1rem !important;
-        }
-        
         div[data-testid="stChatMessageContent"] {
-            max-width: 80% !important;
-            font-size: 14px !important;
-        }
-        
-        .stChatInputContainer {
-            padding: 1rem 1rem !important;
-        }
-        
-        .stAlert {
-            margin: 1rem 1rem !important;
+            max-width: 90% !important;
         }
     }
 </style>
@@ -271,26 +199,36 @@ if prompt := st.chat_input("Type your message..."):
     with st.chat_message("assistant"):
         if st.session_state.bot:
             try:
+                # Get AI Response
                 answer, sources = st.session_state.bot.get_response(prompt)
                 
-                response = st.empty()
-                displayed = ""
-                for word in answer.split():
-                    displayed += word + " "
-                    time.sleep(0.015)
-                    response.write(displayed + "▌")
-                response.write(displayed)
+                # Faster Streaming with preserved markdown formatting
+                response_placeholder = st.empty()
+                full_response = ""
+                
+                # Split by words but KEEP whitespace for formatting
+                words = answer.split(' ')
+                for i, word in enumerate(words):
+                    full_response += word + (" " if i < len(words) - 1 else "")
+                    response_placeholder.markdown(full_response + "▌")
+                    time.sleep(0.01) # Faster than per-char
+                
+                response_placeholder.markdown(full_response)
                 
                 if sources:
                     with st.expander("📎 View Sources"):
                         for i, doc in enumerate(sources[:3], 1):
                             st.caption(f"**Source {i}:** {doc.page_content[:150]}...")
                 
-                st.session_state.messages.append({"role": "assistant", "content": displayed})
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
             except Exception as e:
-                err = f"⚠️ Error: {str(e)}"
-                st.write(err)
-                st.session_state.messages.append({"role": "assistant", "content": err})
+                error_msg = str(e)
+                if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+                    st.error("🚫 **Rate Limit Exceeded**: You've hit the Gemini API free tier limit. Please wait about 30-60 seconds before trying again.")
+                    st.session_state.messages.append({"role": "assistant", "content": "⚠️ Rate limit reached. I'll be ready again in a minute!"})
+                else:
+                    st.error(f"Failed to get response: {error_msg}")
+                    st.session_state.messages.append({"role": "assistant", "content": f"⚠️ Sorry, I encountered an error: {error_msg}"})
         else:
             msg = "⚠️ The knowledge base hasn't been initialized yet. Please contact the administrator to upload documents."
             st.write(msg)
