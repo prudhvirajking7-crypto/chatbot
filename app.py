@@ -175,8 +175,23 @@ with st.sidebar:
     st.info(
         "This chatbot uses **RAG (Retrieval-Augmented Generation)** "
         "to answer questions based on your uploaded documents. "
-        "Powered by **Google Gemini**."
+        "Powered by **Google Gemini** and **MongoDB Atlas**."
     )
+    
+    # Document Management
+    if st.session_state.bot:
+        try:
+            doc_count = st.session_state.bot.get_document_count()
+            st.metric("Documents in Database", doc_count)
+            
+            if doc_count > 0:
+                if st.button("🗑️ Clear All Documents", type="secondary"):
+                    result = st.session_state.bot.clear_all_documents()
+                    st.success(result)
+                    st.rerun()
+        except Exception as e:
+            st.warning(f"Database status unavailable: {str(e)}")
+
 
 # Main Chat Interface
 st.title("🤖 Intelligent Document Assistant")

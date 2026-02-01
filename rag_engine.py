@@ -2,16 +2,15 @@ import os
 import tempfile
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-# from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
+from pymongo import MongoClient
 
 class RAGChatbot:
-    def __init__(self, api_key):
+    def __init__(self, api_key, mongodb_uri=None):
         self.api_key = api_key
         if not api_key:
             raise ValueError("API Key is required")
@@ -20,17 +19,24 @@ class RAGChatbot:
         
         # Initialize Embeddings (Local -> Free & No Rate Limits)
         # Using a small, fast model ideal for CPU
-        # Initialize Embeddings (Local -> Free & No Rate Limits)
-        # Using a small, fast model ideal for CPU
         self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         
-        # Persistence Directory
-        self.persist_directory = "chroma_db"
+        # MongoDB Connection
+        self.mongodb_uri = mongodb_uri or os.getenv("MONGODB_URI")
+        if not self.mongodb_uri:
+            raise ValueError("MongoDB URI is required")
         
-        # Initialize Vector Store (Persistent)
-        self.vector_store = Chroma(
-            persist_directory=self.persist_directory,
-            embedding_function=self.embeddings
+        self.client = MongoClient(self.mongodb_uri)
+        self.db = self.client["chatbot_db"]
+        self.collection = self.db["documents"]
+        
+        # Initialize Vector Store (Persistent with MongoDB)
+        self.vector_store = MongoDBAtlasVectorSearch(
+            collection=self.collection,
+            embedding=self.embeddings,
+            index_name="vector_index",
+            text_key="text",
+            embedding_key="embedding"
         )
         self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 5})
 
@@ -65,10 +71,10 @@ class RAGChatbot:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         chunks = text_splitter.split_documents(documents)
 
-        # Add to Vector Store
+        # Add to Vector Store (MongoDB)
         self.vector_store.add_documents(chunks)
         
-        return f"Processed and saved {len(chunks)} chunks from {len(uploaded_files)} files to persistent storage."
+        return f"Processed and saved {len(chunks)} chunks from {len(uploaded_files)} files to MongoDB Atlas."
 
     def get_response(self, query):
         if not self.retriever:
@@ -97,3 +103,12 @@ Answer:"""
         response = chain.invoke({"context": context_text, "question": query})
         
         return response, docs
+    
+    def get_document_count(self):
+        """Get the number of documents stored in MongoDB"""
+        return self.collection.count_documents({})
+    
+    def clear_all_documents(self):
+        """Clear all documents from MongoDB"""
+        result = self.collection.delete_many({})
+        return f"Deleted {result.deleted_count} documents from MongoDB."
