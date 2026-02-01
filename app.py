@@ -6,234 +6,292 @@ from rag_engine import RAGChatbot
 
 load_dotenv()
 
-# Page Configuration
 st.set_page_config(
-    page_title="Gemini RAG Assistant",
-    page_icon="🤖",
-    layout="wide"
+    page_title="Chat Assistant",
+    page_icon="💬",
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for "Rich Aesthetics"
+# Premium WhatsApp-inspired CSS
 st.markdown("""
 <style>
-    /* Import Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+    /* Import modern font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     
-    html, body, [class*="css"] {
-        font-family: 'Outfit', sans-serif;
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
-
-    /* Main App Background */
+    
+    /* Hide Streamlit elements */
+    #MainMenu, footer, header {display: none !important;}
+    [data-testid="stSidebar"] {display: none !important;}
+    section[data-testid="stSidebarNav"] {display: none !important;}
+    
+    /* Main background - WhatsApp Web pattern */
     .stApp {
-        background-color: #0b0f19;
-        background-image: radial-gradient(circle at 50% 10%, #1f293a 0%, #0b0f19 50%);
-        color: #e0e0e0;
-    }
-
-    /* Chat Messages - General */
-    .stChatMessage {
-        background-color: rgba(42, 47, 60, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 18px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        backdrop-filter: blur(12px);
-    }
-
-    /* Brighter Text */
-    .stMarkdown p {
-        color: #e2e8f0;
-        line-height: 1.6;
-        font-size: 1.05rem;
-    }
-
-    /* Code blocks */
-    code {
-        color: #fca5a5;
-        background: rgba(0,0,0,0.3);
-    }
-
-
-    /* User Message Specifics (Optional if you can target specific roles, 
-       but Streamlit custom CSS for specific roles is tricky. 
-       We stick to general improvements) */
-
-    /* Buttons */
-    .stButton>button {
-        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 0.6rem 1.2rem;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        width: 100%;
-        text-transform: uppercase;
-        font-size: 0.9rem;
+        background-color: #0c1317;
+        background-image: 
+            radial-gradient(at 20% 30%, rgba(0, 168, 132, 0.05) 0px, transparent 50%),
+            radial-gradient(at 80% 70%, rgba(0, 92, 75, 0.05) 0px, transparent 50%);
     }
     
-    .stButton>button:hover {
-        background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
-        box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
-        transform: translateY(-1px);
+    /* Container */
+    .main {
+        padding: 0 !important;
     }
-
-    /* Headings */
+    
+    .block-container {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    /* Header */
     h1 {
-        background: linear-gradient(to right, #c084fc, #6366f1);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800;
-        letter-spacing: -1px;
-        padding-bottom: 0.5rem;
+        background-color: #202c33 !important;
+        background-image: none !important;
+        color: #ffffff !important;
+        padding: 1.25rem 2rem !important;
+        margin: 0 !important;
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        border-bottom: 1px solid #2a3942 !important;
+        text-align: left !important;
+        display: flex !important;
+        align-items: center !important;
     }
     
-    h3 {
-        color: #94a3b8;
-        font-weight: 600;
+    /* Message bubbles - Forced Contrast */
+    div[data-testid="stChatMessageContent"] {
+        padding: 0.8rem 1.2rem !important;
+        border-radius: 12px !important;
+        max-width: 75% !important;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4) !important;
+    }
+    
+    /* User: Vibrant WhatsApp Green with Pure White Text */
+    [data-testid="stChatMessage"]:has([aria-label="user"]) [data-testid="stChatMessageContent"] {
+        background: #008069 !important;
+        color: #ffffff !important;
+        border-bottom-right-radius: 2px !important;
+    }
+    
+    /* Assistant: Clear Gray with Crisp White Text */
+    [data-testid="stChatMessage"]:has([aria-label="assistant"]) [data-testid="stChatMessageContent"] {
+        background: #202c33 !important;
+        color: #ffffff !important;
+        border-bottom-left-radius: 2px !important;
+    }
+    
+    /* Force all text inside bubbles to be visible */
+    [data-testid="stChatMessageContent"] p, 
+    [data-testid="stChatMessageContent"] span,
+    [data-testid="stChatMessageContent"] li {
+        color: #ffffff !important;
+        font-size: 16px !important;
+        font-weight: 400 !important;
+        line-height: 1.6 !important;
     }
 
-    /* Input Fields */
-    .stTextInput>div>div>input {
-        background-color: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: #f8fafc;
-        border-radius: 10px;
-        padding: 0.5rem 1rem;
+    
+    /* Chat input container */
+    .stChatInputContainer {
+        background: linear-gradient(180deg, #1f2c33 0%, #151f24 100%) !important;
+        padding: 1.2rem 2rem !important;
+        border-top: 1px solid #2a3942 !important;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+        position: sticky !important;
+        bottom: 0 !important;
     }
     
-    .stTextInput>div>div>input:focus {
-        border-color: #6366f1;
-        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
-    }
-
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background-color: #0f131d;
-        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    /* Chat input field */
+    .stChatInput {
+        max-width: 100% !important;
     }
     
-    /* Expander */
+    .stChatInput > div {
+        background: #2a3942 !important;
+        border-radius: 10px !important;
+        border: 1px solid #3d4a52 !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .stChatInput > div:focus-within {
+        border-color: #00a884 !important;
+        box-shadow: 0 0 0 2px rgba(0, 168, 132, 0.1) !important;
+    }
+    
+    textarea {
+        background: transparent !important;
+        color: #e9edef !important;
+        border: none !important;
+        font-size: 15px !important;
+        padding: 12px 16px !important;
+        min-height: 44px !important;
+    }
+    
+    textarea::placeholder {
+        color: #8696a0 !important;
+    }
+    
+    textarea:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+    
+    /* Info/Alert styling */
+    .stAlert {
+        background: rgba(31, 44, 51, 0.6) !important;
+        backdrop-filter: blur(10px) !important;
+        color: #8696a0 !important;
+        border: 1px solid #2a3942 !important;
+        border-left: 3px solid #00a884 !important;
+        border-radius: 8px !important;
+        padding: 1rem !important;
+        margin: 1rem 2rem !important;
+        font-size: 14px !important;
+    }
+    
+    /* Expander for sources */
     .streamlit-expanderHeader {
-        background-color: transparent;
-        color: #94a3b8;
-        font-weight: 500;
+        background: rgba(42, 57, 66, 0.5) !important;
+        border: 1px solid #3d4a52 !important;
+        border-radius: 6px !important;
+        color: #8696a0 !important;
+        font-size: 13px !important;
+        padding: 0.5rem 0.75rem !important;
+        margin-top: 0.5rem !important;
+    }
+    
+    .streamlit-expanderHeader:hover {
+        background: rgba(42, 57, 66, 0.8) !important;
+        border-color: #00a884 !important;
+    }
+    
+    .streamlit-expanderContent {
+        background: rgba(31, 44, 51, 0.5) !important;
+        border: 1px solid #3d4a52 !important;
+        border-top: none !important;
+        border-radius: 0 0 6px 6px !important;
+        padding: 0.75rem !important;
+    }
+    
+    /* Captions in expander */
+    .stCaptionContainer {
+        color: #8696a0 !important;
+        font-size: 13px !important;
+        line-height: 1.4 !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Avatar icons */
+    [data-testid="chatAvatarIcon-user"],
+    [data-testid="chatAvatarIcon-assistant"] {
+        display: none !important;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #0c1317;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #2a3942;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #3d4a52;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+        h1 {
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .stChatMessage {
+            padding: 0.5rem 1rem !important;
+        }
+        
+        div[data-testid="stChatMessageContent"] {
+            max-width: 80% !important;
+            font-size: 14px !important;
+        }
+        
+        .stChatInputContainer {
+            padding: 1rem 1rem !important;
+        }
+        
+        .stAlert {
+            margin: 1rem 1rem !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize Session State
+# Initialize
 if "messages" not in st.session_state:
     st.session_state.messages = []
-
 if "bot" not in st.session_state:
     st.session_state.bot = None
 
-# Sidebar Configuration
-with st.sidebar:
-    st.title("🔧 Configuration")
-    
-    # Try to get key from environment variable first
-    env_api_key = os.getenv("GOOGLE_API_KEY", "")
-    api_key = st.text_input("Enter Google Gemini API Key", value=env_api_key, type="password")
-    
-    # Auto-initialize bot if key is present
-    if api_key and st.session_state.bot is None:
+# Auto-init bot
+if not st.session_state.bot:
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if api_key:
         try:
             st.session_state.bot = RAGChatbot(api_key)
-        except Exception as e:
-            st.error(f"Error initializing bot: {e}")
+        except:
+            pass
 
-    st.divider()
-    
-    uploaded_files = st.file_uploader(
-        "Upload Documents (PDF, TXT)", 
-        type=["pdf", "txt"], 
-        accept_multiple_files=True
-    )
-    
-    if st.button("🚀 Process Documents"):
-        if not api_key:
-            st.error("Please provide an API Key first!")
-        elif not uploaded_files:
-            st.error("Please upload some files!")
-        else:
-            with st.spinner("Processing documents..."):
-                try:
-                    if st.session_state.bot is None:
-                         st.session_state.bot = RAGChatbot(api_key)
-                    
-                    result = st.session_state.bot.process_files(uploaded_files)
-                    st.success(result)
-                except Exception as e:
-                    st.error(f"Error: {str(e)}")
-    
-    st.divider()
-    st.markdown("### About")
-    st.info(
-        "This chatbot uses **RAG (Retrieval-Augmented Generation)** "
-        "to answer questions based on your uploaded documents. "
-        "Powered by **Google Gemini** and **MongoDB Atlas**."
-    )
-    
-    # Document Management
-    if st.session_state.bot:
-        try:
-            doc_count = st.session_state.bot.get_document_count()
-            st.metric("Documents in Database", doc_count)
-            
-            if doc_count > 0:
-                if st.button("🗑️ Clear All Documents", type="secondary"):
-                    result = st.session_state.bot.clear_all_documents()
-                    st.success(result)
-                    st.rerun()
-        except Exception as e:
-            st.warning(f"Database status unavailable: {str(e)}")
+# Header
+st.title("💬 AI Document Assistant")
 
+# Welcome message
+if not st.session_state.messages:
+    st.info("👋 Hello! I'm your AI assistant. Ask me anything about your documents and I'll help you find the answers.")
 
-# Main Chat Interface
-st.title("🤖 Intelligent Document Assistant")
-st.caption("Ask questions about your documents in real-time.")
+# Messages
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.write(msg["content"])
 
-# Display Chat History
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# Chat Input
-if prompt := st.chat_input("What would you like to know?"):
-    # Add user message
+# Input
+if prompt := st.chat_input("Type your message..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        st.write(prompt)
     
-    # Generate response
     with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
-        
         if st.session_state.bot:
             try:
-                with st.spinner("Thinking..."):
-                    answer, sources = st.session_state.bot.get_response(prompt)
-                    
-                    # Simulate typing effect
-                    for chunk in answer.split():
-                        full_response += chunk + " "
-                        time.sleep(0.02)
-                        message_placeholder.markdown(full_response + "▌")
-                    message_placeholder.markdown(full_response)
-                    
-                    # Show sources
-                    if sources:
-                        with st.expander("View Sources"):
-                            for doc in sources:
-                                st.markdown(f"- **{doc.metadata.get('source', 'Unknown')}**: {doc.page_content[:100]}...")
+                answer, sources = st.session_state.bot.get_response(prompt)
+                
+                response = st.empty()
+                displayed = ""
+                for word in answer.split():
+                    displayed += word + " "
+                    time.sleep(0.015)
+                    response.write(displayed + "▌")
+                response.write(displayed)
+                
+                if sources:
+                    with st.expander("📎 View Sources"):
+                        for i, doc in enumerate(sources[:3], 1):
+                            st.caption(f"**Source {i}:** {doc.page_content[:150]}...")
+                
+                st.session_state.messages.append({"role": "assistant", "content": displayed})
             except Exception as e:
-                st.error(f"Error generating response: {str(e)}")
+                err = f"⚠️ Error: {str(e)}"
+                st.write(err)
+                st.session_state.messages.append({"role": "assistant", "content": err})
         else:
-            st.warning("Please configure the system and upload documents first.")
-
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+            msg = "⚠️ The knowledge base hasn't been initialized yet. Please contact the administrator to upload documents."
+            st.write(msg)
+            st.session_state.messages.append({"role": "assistant", "content": msg})
