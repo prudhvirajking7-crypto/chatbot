@@ -110,16 +110,24 @@ st.markdown("""
 
     /* User Bubble (Right) - Blue Gradient or Solid Blue */
     [data-testid="stChatMessage"]:has([aria-label="user"]) {
-        flex-direction: row-reverse;
-        text-align: right;
+        flex-direction: row-reverse !important;
+        text-align: right !important;
+        justify-content: flex-end !important;
     }
     
+    [data-testid="stChatMessage"]:has([aria-label="user"]) .stChatMessageContent {
+        flex-direction: row-reverse !important;
+    }
+
     [data-testid="stChatMessage"]:has([aria-label="user"]) [data-testid="stChatMessageContent"] {
         background: linear-gradient(135deg, #2b5ae2 0%, #246bfd 100%);
         color: white;
         border-radius: 12px 12px 0px 12px;
         box-shadow: 0 2px 8px rgba(36, 107, 253, 0.2);
-        margin-left: auto; /* Push to right */
+        margin-left: auto !important; /* Push to right */
+        margin-right: 0 !important;
+        float: right !important;
+        display: inline-block !important;
     }
 
     /* Input Area */
