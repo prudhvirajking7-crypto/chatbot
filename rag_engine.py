@@ -52,7 +52,7 @@ class RAGChatbot:
             text_key="text",
             embedding_key="embedding"
         )
-        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 10})
+        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 5})
 
         # Initialize LLM
         self.llm = ChatGoogleGenerativeAI(
