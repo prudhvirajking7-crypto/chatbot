@@ -111,6 +111,7 @@ st.markdown("""
     /* User Bubble (Right) - Blue Gradient or Solid Blue */
     [data-testid="stChatMessage"]:has([aria-label="user"]) {
         flex-direction: row-reverse;
+        text-align: right;
     }
     
     [data-testid="stChatMessage"]:has([aria-label="user"]) [data-testid="stChatMessageContent"] {
@@ -118,6 +119,7 @@ st.markdown("""
         color: white;
         border-radius: 12px 12px 0px 12px;
         box-shadow: 0 2px 8px rgba(36, 107, 253, 0.2);
+        margin-left: auto; /* Push to right */
     }
 
     /* Input Area */
@@ -168,11 +170,11 @@ st.markdown("""
 <div class="header-container">
     <div class="header-content-wrapper">
         <div class="header-title">
-            <span>Hi there! 👋</span>
+            <span>RAG Chatbot 🤖</span>
         </div>
         <div class="header-subtitle">
             <span class="status-dot"></span>
-            We usually reply within a few seconds
+            Online
         </div>
     </div>
 </div>
