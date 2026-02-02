@@ -186,12 +186,12 @@ if "bot" not in st.session_state:
 
 # Auto-init bot
 if not st.session_state.bot:
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if api_key:
-        try:
-            st.session_state.bot = RAGChatbot(api_key)
-        except:
-            pass
+    try:
+        # RAGChatbot will check st.secrets or os.environ
+        st.session_state.bot = RAGChatbot()
+    except Exception:
+        # Silent fail if keys missing (handled by UI warning)
+        pass
 
 # --- Helper Functions ---
 def generate_response(prompt):

@@ -140,10 +140,10 @@ if "bot" not in st.session_state:
     st.session_state.bot = None
 
 if not st.session_state.bot:
-    key = os.getenv("GOOGLE_API_KEY")
-    if key:
-        try: st.session_state.bot = RAGChatbot(key)
-        except Exception as e: st.error(f"Init Error: {e}")
+    try: 
+        st.session_state.bot = RAGChatbot()
+    except Exception as e: 
+        st.error(f"Init Error: {e}")
 
 # Layout
 col1, col2 = st.columns([2, 1])

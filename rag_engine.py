@@ -1,5 +1,6 @@
 import os
 import tempfile
+import streamlit as st # Added for secrets
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -10,19 +11,32 @@ from langchain_core.output_parsers import StrOutputParser
 from pymongo import MongoClient
 
 class RAGChatbot:
-    def __init__(self, api_key, mongodb_uri=None):
+    def __init__(self, api_key=None, mongodb_uri=None):
+        # 1. API Key Strategy: Argument -> Secrets -> Env
         self.api_key = api_key
-        if not api_key:
+        if not self.api_key:
+             if "GOOGLE_API_KEY" in st.secrets:
+                 self.api_key = st.secrets["GOOGLE_API_KEY"]
+             else:
+                 self.api_key = os.getenv("GOOGLE_API_KEY")
+                 
+        if not self.api_key:
             raise ValueError("API Key is required")
         
-        os.environ["GOOGLE_API_KEY"] = api_key
+        os.environ["GOOGLE_API_KEY"] = self.api_key
         
         # Initialize Embeddings (Local -> Free & No Rate Limits)
         # Using a small, fast model ideal for CPU
         self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         
-        # MongoDB Connection
-        self.mongodb_uri = mongodb_uri or os.getenv("MONGODB_URI")
+        # 2. MongoDB URI Strategy: Argument -> Secrets -> Env
+        self.mongodb_uri = mongodb_uri
+        if not self.mongodb_uri:
+            if "MONGODB_URI" in st.secrets:
+                self.mongodb_uri = st.secrets["MONGODB_URI"]
+            else:
+                self.mongodb_uri = os.getenv("MONGODB_URI")
+
         if not self.mongodb_uri:
             raise ValueError("MongoDB URI is required")
         

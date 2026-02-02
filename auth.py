@@ -11,9 +11,14 @@ def hash_password(password):
 
 def check_credentials(username, password):
     """Check if credentials are valid"""
-    # Get credentials from environment
-    admin_user = os.getenv("ADMIN_USERNAME", "admin")
-    admin_pass_hash = os.getenv("ADMIN_PASSWORD_HASH")
+    # 1. Try st.secrets
+    if "ADMIN_USERNAME" in st.secrets:
+        admin_user = st.secrets["ADMIN_USERNAME"]
+        admin_pass_hash = st.secrets["ADMIN_PASSWORD_HASH"]
+    else:
+        # 2. Fallback to Environment Variables (Local .env)
+        admin_user = os.getenv("ADMIN_USERNAME", "admin")
+        admin_pass_hash = os.getenv("ADMIN_PASSWORD_HASH")
     
     # If no hash in env, use default (change this!)
     if not admin_pass_hash:
