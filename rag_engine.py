@@ -52,7 +52,7 @@ class RAGChatbot:
             text_key="text",
             embedding_key="embedding"
         )
-        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 5})
+        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 10})
 
         # Initialize LLM
         self.llm = ChatGoogleGenerativeAI(
@@ -98,21 +98,21 @@ class RAGChatbot:
         docs = self.retriever.invoke(query)
         context_text = "\n\n".join([doc.page_content for doc in docs])
         
-        prompt_template = """You are a helpful and professional AI assistant. Use the provided context to answer the user's question accurately.
-        
-Guidelines for your response:
-1. **BE STRUCTURED**: Use clear headings, bullet points, or numbered lists if the answer has multiple parts or steps.
-2. **FORMATTING**: Use **bold** for key terms and *italics* for emphasis where appropriate.
-3. **READABILITY**: Break long paragraphs into smaller, digestible chunks.
-4. **ACCURACY**: Base your answer ONLY on the provided context. If the answer isn't in the context, politely state that you can't find that information in the documents.
-5. **TONE**: Maintain a helpful, clear, and professional tone.
+        prompt_template = """You are a comprehensive and analytical AI assistant. Your goal is to provide a detailed answer based on ALL relevant information found in the context.
+
+Guidelines:
+1. **Analyze All Matches**: Scan the provided context thoroughly and identify every relevant piece of information that helps answer the user's question.
+2. **Comprehensive Explanation**: Do not just give a direct answer. Explain the 'why' and 'how' based on the context. Provide context and nuance.
+3. **Structure with Matches**: If there are multiple relevant points or documents, list them clearly. Use bullet points to break down different aspects of the retrieved information.
+4. **Citations (Implicit)**: Refer to specific details from the text to support your explanation.
+5. **No Hallucinations**: Only use the provided context. If the answer is not there, strictly state that.
 
 Context:
 {context}
 
 Question: {question}
 
-Helpful Structured Answer:"""
+Detailed Answer with All Matches:"""
         
         prompt = PromptTemplate(
             template=prompt_template, input_variables=["context", "question"]
