@@ -7,163 +7,178 @@ from rag_engine import RAGChatbot
 load_dotenv()
 
 st.set_page_config(
-    page_title="Chat Assistant",
-    page_icon="💬",
-    layout="wide",
+    page_title="AI Assistant",
+    page_icon="👋",
+    layout="wide", # Wide mode for better responsiveness
     initial_sidebar_state="collapsed"
 )
 
-# Premium WhatsApp-inspired CSS
+# --- UIDesign/CSS ---
 st.markdown("""
 <style>
-    /* Import modern font */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    /* Import Font */
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
     
     * {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    
-    /* Hide Streamlit elements */
-    #MainMenu, footer, header {display: none !important;}
-    [data-testid="stSidebar"] {display: none !important;}
-    section[data-testid="stSidebarNav"] {display: none !important;}
-    
-    /* Global scroll fix */
-    html, body {
-        overflow-x: hidden !important;
-        width: 100%;
-        margin: 0;
-        padding: 0;
+        font-family: 'Roboto', sans-serif;
     }
 
-    /* Main background - WhatsApp Web pattern */
+    /* Main Background */
     .stApp {
-        background-color: #0c1317;
+        background-color: #f2f4f7;
+    }
+
+    /* Hide default Streamlit elements */
+    #MainMenu, footer, header {visibility: hidden;}
+    [data-testid="stSidebar"] {display: none;}
+
+    /* RESPONSIVE HEADER CONTAINER */
+    .header-container {
+        background: linear-gradient(135deg, #2b5ae2 0%, #1c92f4 100%);
+        padding: 2rem;
+        color: white;
+        text-align: left;
+        
+        /* Fixed positioning to ensure it stays at top and spans width */
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 100px; /* Fixed height for consistency */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 9999;
+        
+        box-shadow: 0 4px 12px rgba(43, 90, 226, 0.2);
     }
     
-    /* Container */
+    .header-content-wrapper {
+        max-width: 1000px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    /* Adjust content container to not be covered by fixed header */
     .block-container {
-        padding: 0 !important;
-        max-width: 100% !important;
-        overflow-x: hidden !important;
+        padding-top: 130px !important; /* Push content down - Height of header + buffer */
+        padding-bottom: 100px !important;
+        max-width: 1000px !important;
+        margin: 0 auto !important;
     }
     
-    /* Header - Modern WhatsApp Navbar */
-    h1 {
-        background-color: #202c33 !important;
-        color: #e9edef !important;
-        padding: 1rem 2rem !important;
-        margin: 0 !important;
-        font-size: 1.4rem !important;
-        font-weight: 600 !important;
-        border-bottom: 1px solid #2a3942 !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
+    .header-title {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
     
-    /* Message bubbles - Forced Contrast & Shape */
-    div[data-testid="stChatMessageContent"] {
-        padding: 10px 15px !important;
-        border-radius: 15px !important;
-        max-width: 80% !important;
-        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4) !important;
-        border: none !important;
+    .header-subtitle {
+        font-size: 14px;
+        opacity: 0.9;
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
     
-    /* User: Vibrant Green with Crisp White Text */
+    .status-dot {
+        height: 8px;
+        width: 8px;
+        background-color: #4ade80; /* Green dot */
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    /* Chat Area */
+    div[data-testid="stChatMessage"] {
+        background-color: transparent;
+        border: none;
+        padding: 10px 0;
+    }
+
+    /* Assistant Bubble (Left) - Gray/White */
+    [data-testid="stChatMessage"]:has([aria-label="assistant"]) [data-testid="stChatMessageContent"] {
+        background-color: #ffffff;
+        color: #1d1d1d;
+        border-radius: 12px 12px 12px 0px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        border: 1px solid #e5e7eb;
+    }
+
+    /* User Bubble (Right) - Blue Gradient or Solid Blue */
     [data-testid="stChatMessage"]:has([aria-label="user"]) {
-        flex-direction: row-reverse !important;
-        text-align: right !important;
+        flex-direction: row-reverse;
     }
     
     [data-testid="stChatMessage"]:has([aria-label="user"]) [data-testid="stChatMessageContent"] {
-        background: #005c4b !important;
-        color: #e9edef !important;
-        margin-left: auto !important;
-        border-top-right-radius: 0px !important;
-    }
-    
-    /* Assistant: Clear Gray with Crisp White Text */
-    [data-testid="stChatMessage"]:has([aria-label="assistant"]) [data-testid="stChatMessageContent"] {
-        background: #202c33 !important;
-        color: #e9edef !important;
-        margin-right: auto !important;
-        border-top-left-radius: 0px !important;
-    }
-    
-    /* Force all text inside bubbles to be 100% visible */
-    [data-testid="stChatMessageContent"] p, 
-    [data-testid="stChatMessageContent"] span,
-    [data-testid="stChatMessageContent"] li,
-    [data-testid="stChatMessageContent"] div {
-        color: #e9edef !important;
-        font-size: 15.5px !important;
-        line-height: 1.5 !important;
-        font-weight: 400 !important;
+        background: linear-gradient(135deg, #2b5ae2 0%, #246bfd 100%);
+        color: white;
+        border-radius: 12px 12px 0px 12px;
+        box-shadow: 0 2px 8px rgba(36, 107, 253, 0.2);
     }
 
-    /* Markdown Specifics */
-    [data-testid="stChatMessageContent"] strong {
-        color: #ffffff !important;
-        font-weight: 700 !important;
-    }
-
-    [data-testid="stChatMessageContent"] ul, [data-testid="stChatMessageContent"] ol {
-        margin-left: 20px !important;
-        padding-left: 0px !important;
-        color: #e9edef !important;
-    }
-
-    [data-testid="stChatMessageContent"] li {
-        margin-bottom: 5px !important;
-    }
-    
-    /* Chat input container - Fixing visibility and colors */
-    [data-testid="stChatInput"] {
-        background-color: #202c33 !important;
-        border-radius: 10px !important;
-        padding: 5px !important;
-    }
-
-    [data-testid="stChatInput"] textarea {
-        background-color: #2a3942 !important;
-        color: #ffffff !important;
-        font-size: 16px !important;
-        border-radius: 8px !important;
-        border: 1px solid #3d4a52 !important;
-    }
-
-    /* Fixed white background issue */
+    /* Input Area */
     .stChatInputContainer {
-        background-color: #0c1317 !important;
-        padding: 20px !important;
-        border-top: 1px solid #2a3942 !important;
+        padding-bottom: 20px;
+        background-color: #f2f4f7;
+    }
+    
+    [data-testid="stChatInput"] {
+        background-color: white !important;
+        border-radius: 30px !important; /* Pill shape */
+        border: 1px solid #e1e4e8 !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
+        padding: 5px 10px !important;
+    }
+    
+    [data-testid="stChatInput"] textarea {
+        color: #333 !important;
     }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar {
-        width: 6px;
+    /* Suggested Topic Buttons */
+    .stButton button {
+        background-color: white !important;
+        color: #2b5ae2 !important;
+        border: 1px solid #2b5ae2 !important;
+        border-radius: 20px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        padding: 5px 15px !important;
+        transition: all 0.2s ease;
     }
-    ::-webkit-scrollbar-thumb {
-        background: #374045;
-        border-radius: 3px;
+    
+    .stButton button:hover {
+        background-color: #ebf2ff !important;
+        transform: translateY(-1px);
+    }
+    
+    /* Remove Icons/Avatars */
+    [data-testid="chatAvatarIcon-user"], [data-testid="chatAvatarIcon-assistant"] {
+        display: none;
     }
 
-    /* Hide Avatars for true Minimal Chatbot look */
-    [data-testid="chatAvatarIcon-user"],
-    [data-testid="chatAvatarIcon-assistant"],
-    [data-testid="stChatMessageAvatar"] {
-        display: none !important;
-    }
-
-    @media (max-width: 768px) {
-        div[data-testid="stChatMessageContent"] {
-            max-width: 90% !important;
-        }
-    }
 </style>
 """, unsafe_allow_html=True)
 
-# Initialize
+# --- Header ---
+st.markdown("""
+<div class="header-container">
+    <div class="header-content-wrapper">
+        <div class="header-title">
+            <span>Hi there! 👋</span>
+        </div>
+        <div class="header-subtitle">
+            <span class="status-dot"></span>
+            We usually reply within a few seconds
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# --- State Init ---
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "bot" not in st.session_state:
@@ -178,58 +193,128 @@ if not st.session_state.bot:
         except:
             pass
 
-# Header
-st.title("💬 AI Document Assistant")
+# --- Helper Functions ---
+def generate_response(prompt):
+    """
+    Generates a response for the given prompt, handling UI updates and RAG logic.
+    """
+    # Display user message if not already displayed (controlled by calling code)
+    # This function assumes the message is already in session_state.messages
+    
+    with st.chat_message("assistant"):
+        # 1. Check for specific meta-questions (Hardcoded fallbacks)
+        meta_responses = {
+            "Tell me about this chatbot.": "I am an intelligent document assistant built with RAG (Retrieval-Augmented Generation). I can read your uploaded PDF/Text documents and answer questions based on their content.",
+            "How does this RAG system work?": "I assume a RAG architecture: 1. You upload documents. 2. I split them into chunks and store them in a vector database (MongoDB). 3. When you ask a question, I find the most relevant chunks and use Google Gemini to generate an answer.",
+            "How many documents are currently indexed?": "I can check that for you. (This feature requires a live database connection check).",
+            "What can you help me with?": "I can summarize long documents, extract specific details, compare information across files, and answer specific questions about your uploaded content."
+        }
+        
+        if prompt in meta_responses and not st.session_state.bot:
+             # Fallback if bot is not init but user clicked a button
+             full_response = meta_responses[prompt]
+             st.markdown(full_response)
+             st.session_state.messages.append({"role": "assistant", "content": full_response})
+             return
 
-# Welcome message
+        if st.session_state.bot:
+            try:
+                # Placeholder for streaming
+                response_placeholder = st.empty()
+                full_response = ""
+                
+                # Check for meta-response override first, or use RAG
+                if prompt in meta_responses:
+                     answer = meta_responses[prompt]
+                     sources = []
+                else:
+                    # Get Response from RAG
+                    answer, sources = st.session_state.bot.get_response(prompt)
+                
+                # Simple Stream Simulation
+                words = answer.split(' ')
+                for i, word in enumerate(words):
+                    full_response += word + " "
+                    response_placeholder.markdown(full_response + "▌")
+                    time.sleep(0.015) 
+                
+                response_placeholder.markdown(full_response)
+                
+                # Append sources if available
+                if sources:
+                    with st.expander("🔍 Verified Sources", expanded=False):
+                        for i, doc in enumerate(sources[:2], 1): # Limit to 2 for cleaner UI
+                            st.markdown(f"**Source {i}:**")
+                            st.caption(doc.page_content[:200] + "...")
+                
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+                
+            except Exception as e:
+                err_msg = f"⚠️ Error: {str(e)}"
+                st.error(err_msg)
+                st.session_state.messages.append({"role": "assistant", "content": err_msg})
+        else:
+            msg = "⚠️ Knowledge base not initialized. Please check API key."
+            st.warning(msg)
+            st.session_state.messages.append({"role": "assistant", "content": msg})
+
+# --- Suggested Topics ---
+# Only show if no messages yet
 if not st.session_state.messages:
-    st.info("👋 Hello! I'm your AI assistant. Ask me anything about your documents and I'll help you find the answers.")
+    st.markdown("<div style='text-align: center; color: #666; margin-bottom: 20px; font-size: 14px;'>Please choose one of the topics listed below 👇</div>", unsafe_allow_html=True)
+    
+    # Grid for buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("❓ About Chatbot"):
+            msg = "Tell me about this chatbot."
+            st.session_state.messages.append({"role": "user", "content": msg})
+            # Force a rerun to display the user message then we will handle response at end of script if needed? 
+            # Actually, standard Streamlit flow: update state -> rerun. 
+            # But we want to trigger response generation.
+            # We can use a flag.
+            st.session_state.mk_run_response = msg
+            st.rerun()
+            
+        if st.button("⚙️ How it works"):
+             msg = "How does this RAG system work?"
+             st.session_state.messages.append({"role": "user", "content": msg})
+             st.session_state.mk_run_response = msg
+             st.rerun()
+             
+    with col2:
+        if st.button("📁 Documents"):
+            msg = "How many documents are currently indexed?"
+            st.session_state.messages.append({"role": "user", "content": msg})
+            st.session_state.mk_run_response = msg
+            st.rerun()
+            
+        if st.button("🚀 Capabilities"):
+            msg = "What can you help me with?"
+            st.session_state.messages.append({"role": "user", "content": msg})
+            st.session_state.mk_run_response = msg
+            st.rerun()
 
-# Messages
+# --- Chat History ---
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-# Input
-if prompt := st.chat_input("Type your message..."):
+# --- Response Logic Handling ---
+# Check if a button click triggered a response need
+if "mk_run_response" in st.session_state and st.session_state.mk_run_response:
+    prompt = st.session_state.mk_run_response
+    # Clear flag
+    st.session_state.mk_run_response = None
+    # Generate response
+    generate_response(prompt)
+
+# --- Input & Response ---
+if prompt := st.chat_input("Hit the buttons or type here..."):
+    # Render user message immediately
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.write(prompt)
     
-    with st.chat_message("assistant"):
-        if st.session_state.bot:
-            try:
-                # Get AI Response
-                answer, sources = st.session_state.bot.get_response(prompt)
-                
-                # Faster Streaming with preserved markdown formatting
-                response_placeholder = st.empty()
-                full_response = ""
-                
-                # Split by words but KEEP whitespace for formatting
-                words = answer.split(' ')
-                for i, word in enumerate(words):
-                    full_response += word + (" " if i < len(words) - 1 else "")
-                    response_placeholder.markdown(full_response + "▌")
-                    time.sleep(0.01) # Faster than per-char
-                
-                response_placeholder.markdown(full_response)
-                
-                if sources:
-                    with st.expander("📎 View Sources"):
-                        for i, doc in enumerate(sources[:3], 1):
-                            st.caption(f"**Source {i}:** {doc.page_content[:150]}...")
-                
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
-            except Exception as e:
-                error_msg = str(e)
-                if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-                    st.error("🚫 **Rate Limit Exceeded**: You've hit the Gemini API free tier limit. Please wait about 30-60 seconds before trying again.")
-                    st.session_state.messages.append({"role": "assistant", "content": "⚠️ Rate limit reached. I'll be ready again in a minute!"})
-                else:
-                    st.error(f"Failed to get response: {error_msg}")
-                    st.session_state.messages.append({"role": "assistant", "content": f"⚠️ Sorry, I encountered an error: {error_msg}"})
-        else:
-            msg = "⚠️ The knowledge base hasn't been initialized yet. Please contact the administrator to upload documents."
-            st.write(msg)
-            st.session_state.messages.append({"role": "assistant", "content": msg})
+    # Generate response
+    generate_response(prompt)

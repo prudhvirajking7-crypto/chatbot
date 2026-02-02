@@ -20,77 +20,83 @@ st.set_page_config(
 # Premium Admin CSS
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
     
     * {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Roboto', sans-serif;
     }
     
     #MainMenu, footer, header {display: none;}
     
     .stApp {
-        background-color: #0c1317;
+        background-color: #f2f4f7;
     }
     
     /* Header */
     .admin-header {
-        background: linear-gradient(135deg, #1f2c33 0%, #151f24 100%);
-        color: #e9edef;
-        padding: 1.2rem 2rem;
+        background: linear-gradient(135deg, #2b5ae2 0%, #1c92f4 100%);
+        color: white;
+        padding: 2rem;
         margin: -4rem -4rem 2rem -4rem;
-        border-bottom: 1px solid #2a3942;
+        border-radius: 0 0 20px 20px;
+        box-shadow: 0 4px 12px rgba(43, 90, 226, 0.2);
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
     
     h1, h2, h3 {
-        color: #ffffff !important;
+        color: #1d1d1d !important;
         font-weight: 700 !important;
     }
     
     /* Labels and Help Text */
     label, .stMarkdown p, .stText {
-        color: #e9edef !important;
+        color: #333 !important;
         font-weight: 500 !important;
         font-size: 15px !important;
     }
 
-    /* Cards/Metrics - High Contrast */
+    /* Cards/Metrics - Light Card */
     div[data-testid="stMetric"] {
-        background: #1f2c33;
+        background: white;
         padding: 1.5rem;
         border-radius: 12px;
-        border: 2px solid #2a3942;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        border: 1px solid #e1e4e8;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
     
     div[data-testid="stMetricLabel"] {
-        color: #8696a0 !important;
+        color: #666 !important;
         font-weight: 600 !important;
     }
 
     div[data-testid="stMetricValue"] {
-        color: #00ffca !important;
+        color: #2b5ae2 !important;
         font-weight: 800 !important;
     }
     
     /* Text Inputs */
     .stTextInput input {
-        background: #2a3942 !important;
-        color: #ffffff !important;
-        border: 2px solid #3d4a52 !important;
+        background: white !important;
+        color: #333 !important;
+        border: 1px solid #e1e4e8 !important;
         border-radius: 8px !important;
         font-size: 16px !important;
     }
 
-    
     .stAlert {
-        background: rgba(31, 44, 51, 0.6) !important;
-        border: 1px solid #2a3942 !important;
-        border-left: 4px solid #00a884 !important;
-        color: #e9edef !important;
         border-radius: 8px !important;
+    }
+    
+    /* Login Box */
+    .login-box {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        max-width: 400px;
+        margin: 100px auto;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -166,7 +172,7 @@ with col1:
                         st.error(f"Index Error: {e}")
     
     with c2:
-        if st.button("🗑️ Wipe Database", kind="secondary"):
+        if st.button("🗑️ Wipe Database", type="secondary"):
             try:
                 msg = st.session_state.bot.clear_all_documents()
                 st.success(msg)
