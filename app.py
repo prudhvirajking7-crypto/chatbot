@@ -35,16 +35,16 @@ st.markdown("""
     /* RESPONSIVE HEADER CONTAINER */
     .header-container {
         background: linear-gradient(135deg, #2b5ae2 0%, #1c92f4 100%);
-        padding: 2rem;
+        padding: 1rem 2rem;
         color: white;
         text-align: left;
         
-        /* Fixed positioning to ensure it stays at top and spans width */
+        /* Fixed positioning */
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
-        height: 100px; /* Fixed height for consistency */
+        height: 80px; 
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -57,112 +57,107 @@ st.markdown("""
         max-width: 1000px;
         margin: 0 auto;
         width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 
-    /* Adjust content container to not be covered by fixed header */
+    /* Adjust content container */
     .block-container {
-        padding-top: 130px !important; /* Push content down - Height of header + buffer */
+        padding-top: 100px !important; 
         padding-bottom: 100px !important;
         max-width: 1000px !important;
         margin: 0 auto !important;
     }
     
     .header-title {
-        font-size: 24px;
+        font-size: 20px;
         font-weight: 700;
-        margin-bottom: 5px;
         display: flex;
         align-items: center;
         gap: 10px;
     }
     
     .header-subtitle {
-        font-size: 14px;
+        font-size: 13px;
         opacity: 0.9;
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
+        background: rgba(255,255,255,0.2);
+        padding: 4px 10px;
+        border-radius: 20px;
     }
     
     .status-dot {
         height: 8px;
         width: 8px;
-        background-color: #4ade80; /* Green dot */
+        background-color: #4ade80; 
         border-radius: 50%;
         display: inline-block;
+        box-shadow: 0 0 5px #4ade80;
     }
 
     /* Chat Area */
     div[data-testid="stChatMessage"] {
         background-color: transparent;
         border: none;
-        padding: 10px 0;
+        padding: 1rem 0;
     }
 
-    /* Assistant Bubble (Left) - Gray/White */
+    /* Assistant Bubble (Left)*/
+    [data-testid="stChatMessage"]:has([aria-label="assistant"]) {
+        flex-direction: row !important;
+        justify-content: flex-start !important;
+    }
+
     [data-testid="stChatMessage"]:has([aria-label="assistant"]) [data-testid="stChatMessageContent"] {
         background-color: #ffffff;
         color: #1d1d1d;
-        border-radius: 12px 12px 12px 0px;
+        border-radius: 15px 15px 15px 0px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         border: 1px solid #e5e7eb;
+        padding: 1rem !important;
+        max-width: 80% !important;
     }
 
-    /* User Bubble (Right) - Blue Gradient or Solid Blue */
+    /* User Bubble (Right) */
     [data-testid="stChatMessage"]:has([aria-label="user"]) {
         flex-direction: row-reverse !important;
-        text-align: right !important;
         justify-content: flex-end !important;
     }
     
+    /* Ensure only inner content is reversed if needed, but usually text stays LTR */
     [data-testid="stChatMessage"]:has([aria-label="user"]) .stChatMessageContent {
-        flex-direction: row-reverse !important;
+        text-align: right; 
     }
 
     [data-testid="stChatMessage"]:has([aria-label="user"]) [data-testid="stChatMessageContent"] {
         background: linear-gradient(135deg, #2b5ae2 0%, #246bfd 100%);
         color: white;
-        border-radius: 12px 12px 0px 12px;
-        box-shadow: 0 2px 8px rgba(36, 107, 253, 0.2);
-        margin-left: auto !important; /* Push to right */
-        margin-right: 0 !important;
-        float: right !important;
-        display: inline-block !important;
+        border-radius: 15px 15px 0px 15px;
+        box-shadow: 0 4px 10px rgba(43, 90, 226, 0.2);
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 1rem !important;
+        max-width: 80% !important;
+        margin-left: auto !important;
     }
 
-    /* Input Area */
+    /* Input Area - Centered and Aligned */
     .stChatInputContainer {
-        padding-bottom: 20px;
-        background-color: #f2f4f7;
+        padding-bottom: 2rem;
+        background-color: transparent; /* Transparent to blend */
+        max-width: 1000px !important;
+        margin: 0 auto !important;
     }
     
+    /* Inner form container adjustments if needed */
     [data-testid="stChatInput"] {
         background-color: white !important;
-        border-radius: 30px !important; /* Pill shape */
+        border-radius: 30px !important;
         border: 1px solid #e1e4e8 !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important;
-        padding: 5px 10px !important;
-    }
-    
-    [data-testid="stChatInput"] textarea {
-        color: #333 !important;
-    }
-
-    /* Suggested Topic Buttons */
-    .stButton button {
-        background-color: white !important;
-        color: #2b5ae2 !important;
-        border: 1px solid #2b5ae2 !important;
-        border-radius: 20px !important;
-        font-size: 14px !important;
-        font-weight: 500 !important;
-        padding: 5px 15px !important;
-        transition: all 0.2s ease;
-    }
-    
-    .stButton button:hover {
-        background-color: #ebf2ff !important;
-        transform: translateY(-1px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.06) !important;
+        padding: 0.5rem 1rem !important;
     }
     
     /* Remove Icons/Avatars */
@@ -170,6 +165,13 @@ st.markdown("""
         display: none;
     }
 
+    /* Button Polish */
+    .stButton button {
+        border-radius: 12px !important;
+        font-weight: 500 !important;
+        border: 1px solid #e1e4e8 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
