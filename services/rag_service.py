@@ -3,8 +3,7 @@ import tempfile
 from typing import Iterable, Iterator, List, Tuple
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -21,9 +20,9 @@ class RAGChatbot:
 
         os.environ["GOOGLE_API_KEY"] = self.api_key
 
-        # Initialize Embeddings (Local -> Free & No Rate Limits)
-        # Using a small, fast model ideal for CPU
-        self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        # Initialize Embeddings using Google to avoid heavy local ML dependencies.
+        embedding_model = get_config("EMBEDDING_MODEL", "models/text-embedding-004")
+        self.embeddings = GoogleGenerativeAIEmbeddings(model=embedding_model)
         
         # 2. MongoDB URI Strategy: Argument -> Secrets -> Env
         self.mongodb_uri = mongodb_uri or get_config("MONGODB_URI")
