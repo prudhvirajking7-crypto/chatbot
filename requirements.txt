@@ -1,4 +1,8 @@
-streamlit
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+itsdangerous
 langchain
 langchain-community
 langchain-google-genai
@@ -6,7 +10,8 @@ langchain-text-splitters
 langchain-huggingface
 langchain-mongodb
 sentence-transformers
-chromadb
 python-dotenv
 pypdf
 pymongo
+google-auth==2.23.0
+google-auth-oauthlib==1.1.0

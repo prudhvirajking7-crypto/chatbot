@@ -6,6 +6,9 @@
 __pycache__/
 *.pyc
 
+# Streamlit leftovers from old version
+.streamlit/
+
 # ChromaDB persistence
 chroma_db/
 

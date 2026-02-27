@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard | AI Assistant{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+    <header class="top-nav">
+        <div>
+            <h1>Admin Dashboard</h1>
+            <p>Logged in as {{ admin_username }}</p>
+        </div>
+        <div class="nav-actions">
+            <a class="secondary-btn link-btn" href="/chat">Go to Chat</a>
+            <form action="/admin/logout" method="post">
+                <button class="danger-btn" type="submit">Admin Logout</button>
+            </form>
+        </div>
+    </header>
+
+    <div class="workspace admin-workspace">
+        <aside class="left-panel">
+            <section class="panel-block no-top-gap">
+                <h4>Index Management</h4>
+                <p>Database status: <strong>{{ stats.db_status }}</strong></p>
+                <p>Documents currently indexed: <strong>{{ stats.documents }}</strong></p>
+                <form action="/admin/documents/process" method="post" enctype="multipart/form-data" class="stacked-form">
+                    <input type="file" name="files" multiple accept=".pdf,.txt">
+                    <button type="submit">Process Files</button>
+                </form>
+                <form action="/admin/documents/clear" method="post">
+                    <button type="submit" class="muted-btn">Clear All Documents</button>
+                </form>
+            </section>
+
+            <section class="panel-block">
+                <h4>System Totals</h4>
+                <div class="admin-metrics">
+                    <div class="metric-box"><span>Users</span><strong>{{ stats.users }}</strong></div>
+                    <div class="metric-box"><span>Sessions</span><strong>{{ stats.sessions }}</strong></div>
+                    <div class="metric-box"><span>Chats</span><strong>{{ stats.conversations }}</strong></div>
+                    <div class="metric-box"><span>Messages</span><strong>{{ stats.messages }}</strong></div>
+                    <div class="metric-box"><span>Docs</span><strong>{{ stats.documents }}</strong></div>
+                </div>
+            </section>
+        </aside>
+
+        <main class="right-panel">
+            <section class="panel-block no-top-gap">
+                <h4>Recent Users</h4>
+                {% if recent_users %}
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Last Login</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in recent_users %}
+                        <tr>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>{{ user.last_login }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No users found.</p>
+                {% endif %}
+            </section>
+
+            <section class="panel-block">
+                <h4>Recent Conversations</h4>
+                {% if recent_conversations %}
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>User ID</th>
+                            <th>Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in recent_conversations %}
+                        <tr>
+                            <td>{{ item.title }}</td>
+                            <td>{{ item.user_id }}</td>
+                            <td>{{ item.updated_at }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No conversations found.</p>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+</div>
+{% endblock %}

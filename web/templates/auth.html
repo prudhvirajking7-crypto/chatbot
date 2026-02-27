@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Login | AI Assistant{% endblock %}
+
+{% block content %}
+<main class="auth-page">
+    <section class="hero-panel">
+        <p class="hero-badge">Enterprise AI Workspace</p>
+        <h1>Chat Faster. Search Deeper.</h1>
+        <p class="hero-text">
+            Unified assistant with conversation history, profile-aware sessions, and document intelligence powered by RAG.
+        </p>
+    </section>
+
+    <section class="auth-panel">
+        <div class="auth-card">
+            <h2 class="auth-heading">Sign in to continue</h2>
+            <p class="auth-subheading">Use local admin credentials or Google OAuth.</p>
+
+            <form action="/login/local" method="post" class="admin-login-form section-gap">
+                <label for="username">Username</label>
+                <input id="username" name="username" type="text" placeholder="Enter username" required>
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" placeholder="Enter password" required>
+                <button class="primary-btn full" type="submit">Login</button>
+            </form>
+
+            <div class="divider"><span>or continue with</span></div>
+
+            <div class="auth-actions">
+                <a class="secondary-btn" href="/login/google">Google Login</a>
+                <a class="secondary-btn" href="/signup/google">Google Sign Up</a>
+            </div>
+
+            <div class="auth-inline-note">
+                Need admin operations? <a href="/admin/login">Open Admin Login</a>
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}

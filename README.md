@@ -1,44 +1,61 @@
-# RAG Chatbot with Google Gemini
+# AI Assistant (FastAPI + MongoDB + Gemini)
 
-This is a Retrieval-Augmented Generation (RAG) chatbot application built with Python, Streamlit, and Google's Gemini Pro model. It allows you to upload documents (PDF, TXT) and ask questions about them.
+This project is now a full web application built with **FastAPI** (no Streamlit).  
+It includes Google OAuth login/signup, chat history, and RAG-based document Q&A.
 
-## Features
+## Stack
 
--   **Free LLM**: Uses Google's Gemini Pro (free tier available).
--   **RAG Technology**: Retrieves relevant context from your uploaded documents to answer questions accurately.
--   **Document Support**: Supports PDF and TXT files.
--   **Modern UI**: Built with Streamlit with a custom dark-themed design.
--   **Source Citations**: Shows exactly which parts of the documents were used to generate the answer.
+- FastAPI + Jinja templates + vanilla JS
+- MongoDB (users, sessions, conversations, messages, documents)
+- Google OAuth2
+- Gemini + LangChain + MongoDB Atlas Vector Search
 
-## Prerequisites
+## Run Locally
 
--   Python 3.10 or higher
--   A Google Cloud API Key with Gemini API access (Get it [here](https://makersuite.google.com/app/apikey))
+1. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-## Installation
+2. Set `.env`:
+```env
+GOOGLE_API_KEY=...
+MONGODB_URI=...
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+GOOGLE_REDIRECT_URI=http://127.0.0.1:8000/auth/callback
+APP_SECRET_KEY=replace_with_random_secret
+ADMIN_USERNAME=Kotaraju
+ADMIN_PASSWORD=Kotaraju
+ADMIN_PASSWORD_HASH=
+```
 
-1.  **Install Dependencies**:
-    ```bash
-    pip install -r requirements.txt
-    ```
+3. Start server:
+```bash
+uvicorn app:app --reload
+```
 
-## Usage
+4. Open:
+`http://127.0.0.1:8000`
 
-1.  **Run the Application**:
-    ```bash
-    python -m streamlit run app.py
-    ```
+## Admin Routes
 
-2.  **Configure**:
-    -   Enter your Google Gemini API Key in the sidebar.
-    -   Upload your PDF or Text documents.
-    -   Click "Process Documents".
+- `GET /admin/login` - admin login page
+- `POST /admin/login` - admin authenticate
+- `GET /admin` - admin dashboard (protected)
+- `POST /admin/documents/process` - upload/process docs
+- `POST /admin/documents/clear` - clear all indexed docs
+- `POST /admin/logout` - admin logout
 
-3.  **Chat**:
-    -   Once processed, ask any question about the documents in the chat interface.
+Default local bypass credentials:
+- Username: `Kotaraju`
+- Password: `Kotaraju`
 
 ## Project Structure
 
--   `app.py`: The main Streamlit application and UI logic.
--   `rag_engine.py`: Handles document processing, embedding generation, and the RAG chain.
--   `requirements.txt`: List of Python dependencies.
+- `app.py` - FastAPI entrypoint and routes
+- `web/templates/` - HTML templates (`auth.html`, `chat.html`)
+- `web/static/` - UI styles and JS
+- `auth/` - OAuth and user/session managers
+- `services/` - RAG engine, routing, chat history
+- `core/` - config helpers

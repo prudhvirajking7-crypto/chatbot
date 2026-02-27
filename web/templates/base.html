@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}AI Assistant{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=20260227c">
+    <link rel="stylesheet" href="/static/css/app.css?v=20260227b">
+</head>
+<body>
+    {% if flash %}
+    <div class="flash flash-{{ flash.level }}">{{ flash.message }}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+</body>
+</html>

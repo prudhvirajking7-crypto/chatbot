@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Chat | AI Assistant{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+    <header class="top-nav">
+        <div>
+            <h1>AI Assistant Workspace</h1>
+            <p>Profile-aware chat with document intelligence</p>
+        </div>
+        <div class="nav-actions">
+            <button class="secondary-btn" id="toggle-sidebar" type="button" aria-controls="left-panel" aria-expanded="false">Panels</button>
+            {% if is_admin %}
+            <a class="secondary-btn link-btn" href="/admin">Admin</a>
+            {% endif %}
+            <form action="/logout" method="post">
+                <button class="danger-btn" type="submit">Logout</button>
+            </form>
+        </div>
+    </header>
+
+    <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+
+    <div class="workspace">
+        <aside class="left-panel" id="left-panel">
+            <div class="sidebar-head">
+                <h3>Workspace</h3>
+                <button id="close-sidebar" class="icon-btn" type="button" aria-label="Close panel">x</button>
+            </div>
+
+            <section class="profile-card">
+                <div class="avatar-wrap">
+                    {% if user.profile_picture %}
+                    <img src="{{ user.profile_picture }}" alt="Profile">
+                    {% else %}
+                    <div class="avatar-fallback">{{ user.name[0] if user.name else "U" }}</div>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3>{{ user.name }}</h3>
+                    <p>{{ user.email }}</p>
+                    <span class="meta-pill">{{ user_stats }}</span>
+                </div>
+            </section>
+
+            <form action="/chat/new" method="post" class="section-gap">
+                <button class="primary-btn full" type="submit">+ New Chat</button>
+            </form>
+
+            {% if is_admin %}
+            <section class="panel-block">
+                <h4>Knowledge Base</h4>
+                <p>{{ doc_count }} chunks indexed</p>
+                <form action="/documents/process" method="post" enctype="multipart/form-data" class="stacked-form">
+                    <input type="hidden" name="conversation_id" value="{{ conversation_id }}">
+                    <input type="file" name="files" multiple accept=".pdf,.txt">
+                    <button type="submit">Process Files</button>
+                </form>
+                <form action="/documents/clear" method="post">
+                    <input type="hidden" name="conversation_id" value="{{ conversation_id }}">
+                    <button type="submit" class="muted-btn">Clear Documents</button>
+                </form>
+            </section>
+            {% endif %}
+
+            <section class="panel-block">
+                <h4>Chat History</h4>
+                <div class="conversation-list">
+                    {% for conv in conversations %}
+                    <div class="conversation-item {% if conv.id == conversation_id %}active{% endif %}">
+                        <a href="/chat?conversation_id={{ conv.id }}">{{ conv.title }}</a>
+                        <form action="/chat/delete/{{ conv.id }}" method="post">
+                            <button type="submit" aria-label="Delete conversation">x</button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+        </aside>
+
+        <main class="right-panel">
+            <section class="chat-header">
+                <div class="chat-title-wrap">
+                    <h2 id="conversation-title">{{ current_title }}</h2>
+                    <p class="chat-subline">Conversation ID: <span class="mono-id" id="conversation-id-text">{{ conversation_id }}</span></p>
+                </div>
+                <div class="mode-wrap">
+                    <label for="mode-select">Mode</label>
+                    <select id="mode-select">
+                        <option value="Auto">Auto</option>
+                        <option value="RAG Only">RAG Only</option>
+                        <option value="Direct LLM">Direct LLM</option>
+                    </select>
+                </div>
+            </section>
+
+            <section id="message-list" class="message-list">
+                {% if messages|length == 0 %}
+                <div class="empty-state">
+                    <h3>Start a conversation</h3>
+                    <p>Ask anything, or upload docs and ask document-specific questions.</p>
+                </div>
+                {% endif %}
+                {% for msg in messages %}
+                <article class="msg {{ msg.role }}">
+                    <div class="bubble">{{ msg.content }}</div>
+                </article>
+                {% endfor %}
+            </section>
+
+            <form id="chat-form" class="chat-form">
+                <input type="hidden" id="conversation-id" value="{{ conversation_id }}">
+                <textarea id="prompt-input" rows="2" placeholder="Type your message..."></textarea>
+                <button type="submit" class="primary-btn">Send</button>
+            </form>
+        </main>
+    </div>
+</div>
+
+<script>
+    window.__CHAT_BOOTSTRAP__ = {
+        conversationId: "{{ conversation_id }}",
+    };
+</script>
+<script src="/static/js/chat.js?v=20260227b"></script>
+{% endblock %}

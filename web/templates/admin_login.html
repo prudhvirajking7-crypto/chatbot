@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login | AI Assistant{% endblock %}
+
+{% block content %}
+<main class="auth-page admin-auth-page">
+    <section class="hero-panel">
+        <p class="hero-badge">Admin Console</p>
+        <h1>System Operations</h1>
+        <p class="hero-text">
+            Manage document index, monitor usage, and review platform activity.
+        </p>
+    </section>
+
+    <section class="auth-panel">
+        <div class="auth-card">
+            <h2>Admin Login</h2>
+            <p>Sign in with configured admin credentials.</p>
+            <form action="/admin/login" method="post" class="admin-login-form">
+                <label for="username">Username</label>
+                <input id="username" name="username" type="text" required>
+                <label for="password">Password</label>
+                <input id="password" name="password" type="password" required>
+                <button class="primary-btn full" type="submit">Login</button>
+            </form>
+            <a class="secondary-btn full link-btn" href="/">Back to User Login</a>
+        </div>
+    </section>
+</main>
+{% endblock %}
