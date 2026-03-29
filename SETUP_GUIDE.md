@@ -13,8 +13,8 @@ GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 GOOGLE_REDIRECT_URI=http://127.0.0.1:8000/auth/callback
 APP_SECRET_KEY=your_random_long_secret
-ADMIN_USERNAME=Kotaraju
-ADMIN_PASSWORD=Kotaraju
+ADMIN_USERNAME=your_admin_username
+ADMIN_PASSWORD=your_admin_password
 ADMIN_PASSWORD_HASH=sha256_hash_of_admin_password
 ```
 

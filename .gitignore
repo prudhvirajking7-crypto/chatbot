@@ -5,6 +5,9 @@
 # Claude Code workspace folder
 .claude/
 
+# Secrets / credential templates
+secrets_template.toml
+
 # Python cache
 __pycache__/
 *.pyc

@@ -25,8 +25,8 @@ GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 GOOGLE_REDIRECT_URI=http://127.0.0.1:8000/auth/callback
 APP_SECRET_KEY=replace_with_random_secret
-ADMIN_USERNAME=Kotaraju
-ADMIN_PASSWORD=Kotaraju
+ADMIN_USERNAME=your_admin_username
+ADMIN_PASSWORD=your_admin_password
 ADMIN_PASSWORD_HASH=
 ```
 
@@ -47,9 +47,7 @@ uvicorn app:app --reload
 - `POST /admin/documents/clear` - clear all indexed docs
 - `POST /admin/logout` - admin logout
 
-Default local bypass credentials:
-- Username: `Kotaraju`
-- Password: `Kotaraju`
+Set `ADMIN_USERNAME` and `ADMIN_PASSWORD` in your `.env` file or Netlify environment variables.
 
 ## Project Structure
 
