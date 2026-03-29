@@ -11,17 +11,12 @@
 [functions]
   included_files = ["web/**", "services/**", "auth/**", "core/**", "app.py"]
 
-# Static assets served directly from CDN
-[[redirects]]
-  from   = "/static/*"
-  to     = "/static/:splat"
-  status = 200
-
-# All other routes → FastAPI function
+# All routes → FastAPI function (Mangum reads path from Lambda event)
 [[redirects]]
   from   = "/*"
-  to     = "/.netlify/functions/api/:splat"
+  to     = "/.netlify/functions/api"
   status = 200
+  force  = true
 
 [dev]
   command    = "uvicorn app:app --host 0.0.0.0 --port 8085"
