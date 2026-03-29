@@ -1,4 +1,5 @@
 import json
+import logging
 import secrets
 import time
 from functools import lru_cache
@@ -6,6 +7,19 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
 from dotenv import load_dotenv
+
+# Load .env BEFORE any local imports so all modules see the env vars
+BASE_DIR = Path(__file__).resolve().parent
+load_dotenv(dotenv_path=BASE_DIR / ".env", override=True)
+
+# ── Logging setup ──────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("chatbot")
+
 from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -21,9 +35,6 @@ from services.chat_history import ChatHistoryManager
 from services.rag_service import RAGChatbot
 from services.response_router import ResponseRouter
 
-BASE_DIR = Path(__file__).resolve().parent
-load_dotenv(dotenv_path=BASE_DIR / ".env", override=True)
-
 app = FastAPI(title="AI Assistant Web App")
 
 secret_key = get_config("APP_SECRET_KEY", "change-this-dev-secret")
@@ -34,6 +45,28 @@ app.add_middleware(
     same_site="lax",
     https_only=False,
 )
+
+# ── Request / connection logging middleware ────────────────────────
+from starlette.middleware.base import BaseHTTPMiddleware
+
+class RequestLogMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        start = time.time()
+        client_ip = request.client.host if request.client else "unknown"
+        method = request.method
+        path = request.url.path
+        logger.info("→ %s %s  client=%s", method, path, client_ip)
+        try:
+            response = await call_next(request)
+        except Exception as exc:
+            logger.error("✗ %s %s  error=%s  client=%s", method, path, exc, client_ip)
+            raise
+        elapsed = (time.time() - start) * 1000
+        logger.info("← %s %s  status=%s  %.1fms  client=%s",
+                    method, path, response.status_code, elapsed, client_ip)
+        return response
+
+app.add_middleware(RequestLogMiddleware)
 
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "web" / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "web" / "templates"))
@@ -283,7 +316,9 @@ def home(request: Request):
 
 @app.post("/login/local")
 def login_local(request: Request, username: str = Form(...), password: str = Form(...)):
+    client_ip = request.client.host if request.client else "unknown"
     if not check_credentials(username, password):
+        logger.warning("LOGIN FAILED  user=%s  ip=%s", username, client_ip)
         set_flash(request, "Invalid login credentials.", "error")
         return RedirectResponse(url="/", status_code=302)
 
@@ -304,9 +339,11 @@ def login_local(request: Request, username: str = Form(...), password: str = For
         request.session["session_id"] = session_id
         request.session["admin_authenticated"] = True
         request.session["admin_username"] = username
+        logger.info("LOGIN OK  user=%s  ip=%s  session=%s", username, client_ip, session_id[:8])
         set_flash(request, f"Welcome {username}. Logged in successfully.", "success")
         return RedirectResponse(url="/chat", status_code=302)
     except Exception as exc:
+        logger.error("LOGIN ERROR  user=%s  ip=%s  error=%s", username, client_ip, exc)
         set_flash(request, f"Local login failed: {exc}", "error")
         return RedirectResponse(url="/", status_code=302)
 
@@ -577,11 +614,16 @@ class ChatRequest(BaseModel):
 def send_chat_stream(request: Request, payload: ChatRequest):
     user = get_authenticated_user(request)
     if not user:
+        logger.warning("CHAT UNAUTHORIZED  ip=%s", request.client.host if request.client else "?")
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
     prompt = (payload.prompt or "").strip()
     if not prompt:
         return JSONResponse({"error": "Prompt cannot be empty."}, status_code=400)
+
+    client_ip = request.client.host if request.client else "unknown"
+    logger.info("CHAT  user=%s  mode=%s  ip=%s  prompt=%.60s",
+                user.get("name", "?"), payload.mode, client_ip, prompt)
 
     history = get_history_manager()
     conversations = history.get_all_conversations(user_id=user["id"])
@@ -608,8 +650,8 @@ def send_chat_stream(request: Request, payload: ChatRequest):
 
     def event_stream():
         answer_parts = []
-        source_type = "direct_llm"
-        sources = []
+        source_ref = ["direct_llm"]
+        docs_ref: list = []
         assistant_saved = False
         try:
             yield _to_ndjson(
@@ -622,23 +664,32 @@ def send_chat_stream(request: Request, payload: ChatRequest):
             )
 
             if not bot:
-                chunk_iter = _iter_text_chunks("Knowledge base is not initialized. Check API key and MongoDB settings.")
-                source_type = "direct_llm"
-                sources = []
+                for chunk in _iter_text_chunks("Knowledge base is not initialized. Check API key and MongoDB settings."):
+                    answer_parts.append(chunk)
+                    yield _to_ndjson({"type": "chunk", "content": chunk})
             else:
                 doc_count = bot.get_document_count()
-                chunk_iter, source_type, sources = router.route_query_stream(
+                event_iter, source_ref, docs_ref = router.route_query_events(
                     query=prompt,
                     mode=payload.mode,
                     bot=bot,
                     doc_count=doc_count,
                 )
 
-            for chunk in chunk_iter:
-                if not chunk:
-                    continue
-                answer_parts.append(chunk)
-                yield _to_ndjson({"type": "chunk", "content": chunk})
+                for event in event_iter:
+                    if not event:
+                        continue
+                    evt_type = event.get("type")
+                    if evt_type == "step":
+                        yield _to_ndjson(event)
+                    elif evt_type == "chunk":
+                        content = event.get("content", "")
+                        if content:
+                            answer_parts.append(content)
+                            yield _to_ndjson(event)
+
+            source_type = source_ref[0]
+            sources = docs_ref
 
             answer = "".join(answer_parts).strip()
             if not answer:
@@ -664,7 +715,7 @@ def send_chat_stream(request: Request, payload: ChatRequest):
                 }
             )
         except Exception as exc:
-            print(f"chat_stream_error: {exc}")
+            logger.error("CHAT STREAM ERROR  %s", exc, exc_info=True)
             interrupted_note = "\n\n[Generation interrupted. Please try again.]"
             if answer_parts:
                 answer_parts.append(interrupted_note)
@@ -761,3 +812,8 @@ def health():
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
     return RedirectResponse(url="/static/favicon.svg", status_code=307)
+
+
+# Serverless adapter for Netlify / AWS Lambda
+from mangum import Mangum
+handler = Mangum(app, lifespan='off')

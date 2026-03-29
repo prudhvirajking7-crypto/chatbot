@@ -3,33 +3,59 @@ import tempfile
 from typing import Iterable, Iterator, List, Tuple
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain_openai import ChatOpenAI
+from langchain_core.embeddings import Embeddings
 from langchain_mongodb import MongoDBAtlasVectorSearch
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from pymongo import MongoClient
+from huggingface_hub import InferenceClient
 from core.config import get_config
+
+HF_ROUTER_BASE_URL = "https://router.huggingface.co/v1"
+HF_LLM_MODEL       = "meta-llama/Llama-3.3-70B-Instruct:novita"
+HF_EMBED_MODEL      = "sentence-transformers/all-MiniLM-L6-v2"
+
+
+class HFInferenceEmbeddings(Embeddings):
+    """LangChain-compatible embeddings using HuggingFace InferenceClient.feature_extraction."""
+
+    def __init__(self, model: str, api_key: str):
+        self.model = model
+        self._client = InferenceClient(provider="hf-inference", api_key=api_key)
+
+    def _embed(self, text: str) -> list:
+        result = self._client.feature_extraction(text, model=self.model)
+        # result is a numpy array or nested list; flatten to 1-D list
+        import numpy as np
+        arr = np.array(result)
+        if arr.ndim > 1:
+            arr = arr.mean(axis=0)
+        return arr.tolist()
+
+    def embed_documents(self, texts: List[str]) -> List[list]:
+        return [self._embed(t) for t in texts]
+
+    def embed_query(self, text: str) -> list:
+        return self._embed(text)
+
 
 class RAGChatbot:
     def __init__(self, api_key=None, mongodb_uri=None):
-        # 1. API Key Strategy: Argument -> Secrets -> Env
-        self.api_key = api_key or get_config("GOOGLE_API_KEY")
-                 
+        # HuggingFace token for both LLM and embeddings
+        self.api_key = api_key or get_config("HF_TOKEN")
         if not self.api_key:
-            raise ValueError("API Key is required")
+            raise ValueError("HF_TOKEN is required")
 
-        os.environ["GOOGLE_API_KEY"] = self.api_key
+        # Embeddings via HF InferenceClient (cloud, no local model)
+        embed_model = get_config("EMBEDDING_MODEL", HF_EMBED_MODEL)
+        self.embeddings = HFInferenceEmbeddings(model=embed_model, api_key=self.api_key)
 
-        # Initialize Embeddings using Google to avoid heavy local ML dependencies.
-        embedding_model = get_config("EMBEDDING_MODEL", "models/text-embedding-004")
-        self.embeddings = GoogleGenerativeAIEmbeddings(model=embedding_model)
-        
-        # 2. MongoDB URI Strategy: Argument -> Secrets -> Env
+        # MongoDB
         self.mongodb_uri = mongodb_uri or get_config("MONGODB_URI")
-
         if not self.mongodb_uri:
             raise ValueError("MongoDB URI is required")
-        
+
         self.client = MongoClient(
             self.mongodb_uri,
             serverSelectionTimeoutMS=5000,
@@ -38,24 +64,26 @@ class RAGChatbot:
         )
         self.db = self.client["chatbot_db"]
         self.collection = self.db["documents"]
-        
-        # Initialize Vector Store (Persistent with MongoDB)
+
+        # Vector Store
         self.vector_store = MongoDBAtlasVectorSearch(
             collection=self.collection,
             embedding=self.embeddings,
             index_name="vector_index",
             text_key="text",
-            embedding_key="embedding"
+            embedding_key="embedding",
         )
-        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 10})
+        self.retriever = self.vector_store.as_retriever(search_kwargs={"k": 4})
 
-        # Initialize LLM
-        llm_kwargs = {
-            "model": "gemini-2.5-flash",
-            "temperature": 0.3,
-            "streaming": True,
-        }
-        self.llm = ChatGoogleGenerativeAI(**llm_kwargs)
+        # LLM — Llama 3.3 70B via HuggingFace router (OpenAI-compatible)
+        llm_model = get_config("LLM_MODEL", HF_LLM_MODEL)
+        self.llm = ChatOpenAI(
+            model=llm_model,
+            base_url=HF_ROUTER_BASE_URL,
+            api_key=self.api_key,
+            temperature=0.3,
+            streaming=True,
+        )
 
     def process_file_payloads(self, files: Iterable[Tuple[str, bytes]]) -> str:
         """
@@ -127,15 +155,17 @@ Answer:"""
         return prompt | self.llm | StrOutputParser()
 
     def _build_rag_chain(self):
-        prompt_template = """You are an intelligent and helpful AI assistant with expertise in analyzing and explaining information.
+        prompt_template = """You are an intelligent AI assistant that answers questions strictly based on the provided documentation context.
 
-Instructions:
-1. Synthesize the context into a direct, informative, brief answer.
-2. Keep response length around 120-220 words unless the user asks for detailed output.
-3. Start with a one-line conclusion first.
-4. Do not mention page numbers, metadata, retrieval details, or source counts.
-5. Use only the provided context. If missing, say: "I don't have information about that in the available documents."
-6. If listing items, keep to the top 3-5 most important points.
+## Instructions
+1. Answer using ONLY information found in the context below.
+2. For code samples: use ONLY the syntax, function names, arguments, and patterns shown in the context. Do not invent API calls not present in the context.
+3. If the context contains a code example relevant to the question, reproduce or adapt it exactly — do not rewrite it from general knowledge.
+4. Cite the relevant part of the context with a brief inline note like: *(from docs: ...)*
+5. Start with a one-line conclusion or direct answer.
+6. Keep response around 120-220 words unless the user asks for more detail.
+7. Do not mention page numbers, metadata, retrieval details, or source counts.
+8. If the context does not contain the answer, say exactly: "The uploaded documents do not cover this topic."
 
 Context:
 {context}

@@ -25,6 +25,20 @@ class ResponseRouter:
         'from the file', 'summarize', 'explain the document', 'tell me about the document'
     ]
 
+    # Coding / programming keywords — always route to RAG so docs are consulted
+    CODING_KEYWORDS = [
+        'code', 'function', 'class', 'method', 'variable', 'loop', 'array',
+        'list', 'dict', 'dictionary', 'import', 'module', 'library', 'package',
+        'install', 'pip', 'npm', 'syntax', 'error', 'exception', 'debug',
+        'algorithm', 'implement', 'example', 'snippet', 'script', 'program',
+        'api', 'endpoint', 'request', 'response', 'json', 'http', 'rest',
+        'database', 'query', 'sql', 'mongodb', 'schema',
+        'how to', 'how do i', 'how can i', 'write a', 'create a', 'build a',
+        'def ', 'class ', 'return', 'lambda', 'async', 'await', 'callback',
+        'framework', 'fastapi', 'flask', 'django', 'react', 'javascript', 'python',
+        'typescript', 'rust', 'golang', 'java', 'kotlin', 'swift',
+    ]
+
     def __init__(self):
         self.greeting_regex = re.compile('|'.join(self.GREETING_PATTERNS), re.IGNORECASE)
 
@@ -47,6 +61,11 @@ class ResponseRouter:
         for keyword in self.DOCUMENT_KEYWORDS:
             if keyword.lower() in query_lower:
                 return "document_question"
+
+        # Check for coding/programming questions — route to RAG to use uploaded docs
+        for keyword in self.CODING_KEYWORDS:
+            if keyword.lower() in query_lower:
+                return "coding_question"
 
         # Default to general question
         return "general"
@@ -153,6 +172,63 @@ class ResponseRouter:
         """
         response = bot.get_direct_llm_response(query)
         return response, "direct_llm", []
+
+    def route_query_events(
+        self,
+        query: str,
+        mode: str,
+        bot,
+        doc_count: int = 0,
+    ) -> tuple:
+        """
+        Route a query for event-based streaming (agentic RAG path).
+
+        Returns (event_iterator, source_ref, docs_ref) where:
+          - event_iterator yields {"type": "step"|"chunk", "content": str}
+          - source_ref is a mutable list [source_type_str], set after iteration
+          - docs_ref is a mutable list of Document objects, set after iteration
+        """
+        from services.agent_service import AgenticRAGService
+
+        source_ref = ["direct_llm"]
+        docs_ref: list = []
+        query_type = self.detect_query_type(query)
+
+        # Greetings always bypass the knowledge base
+        if query_type == "greeting":
+            def _greeting_events():
+                source_ref[0] = "direct_llm"
+                for chunk in bot.stream_direct_llm_response(query):
+                    if chunk:
+                        yield {"type": "chunk", "content": chunk}
+            return _greeting_events(), source_ref, docs_ref
+
+        # Coding questions always go to RAG when docs are available (learn syntax from docs)
+        if query_type == "coding_question" and doc_count > 0 and mode != "Direct LLM":
+            agent_svc = AgenticRAGService(bot)
+            return agent_svc.stream_response(query, docs_ref, source_ref), source_ref, docs_ref
+
+        # Agentic RAG when docs are indexed and mode supports it
+        if mode in ("Auto", "RAG Only") and doc_count > 0:
+            agent_svc = AgenticRAGService(bot)
+            return agent_svc.stream_response(query, docs_ref, source_ref), source_ref, docs_ref
+
+        # RAG Only requested but no docs indexed — graceful fallback
+        if mode == "RAG Only":
+            def _no_docs_events():
+                source_ref[0] = "rag_fallback"
+                for chunk in bot.stream_direct_llm_response(query):
+                    if chunk:
+                        yield {"type": "chunk", "content": chunk}
+            return _no_docs_events(), source_ref, docs_ref
+
+        # Direct LLM (or Auto with no docs)
+        def _llm_events():
+            source_ref[0] = "direct_llm"
+            for chunk in bot.stream_direct_llm_response(query):
+                if chunk:
+                    yield {"type": "chunk", "content": chunk}
+        return _llm_events(), source_ref, docs_ref
 
     @staticmethod
     def get_source_display(source_type: str, doc_count: int = 0) -> str:

@@ -1,41 +1,84 @@
 {% extends "base.html" %}
-
-{% block title %}Login | AI Assistant{% endblock %}
-
+{% block title %}Sign In | Agentic RAG{% endblock %}
 {% block content %}
-<main class="auth-page">
-    <section class="hero-panel">
-        <p class="hero-badge">Enterprise AI Workspace</p>
-        <h1>Chat Faster. Search Deeper.</h1>
-        <p class="hero-text">
-            Unified assistant with conversation history, profile-aware sessions, and document intelligence powered by RAG.
-        </p>
-    </section>
+<div class="auth-page">
+  <!-- Hero -->
+  <div class="hero-panel">
+    <div class="hero-badge">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><circle cx="5" cy="5" r="4" fill="#60a5fa"/></svg>
+      Agentic RAG Platform
+    </div>
+    <h1>Think <span>deeper</span>,<br>answer faster.</h1>
+    <p class="hero-text">
+      Multi-step reasoning over your documents. Upload PDFs, ask anything — the agent autonomously searches and synthesizes answers.
+    </p>
+    <div class="hero-features">
+      <div class="hero-feature">
+        <div class="hero-feature-icon">🔍</div>
+        <span>Autonomous multi-hop document retrieval</span>
+      </div>
+      <div class="hero-feature">
+        <div class="hero-feature-icon">⚡</div>
+        <span>Real-time streaming with reasoning steps</span>
+      </div>
+      <div class="hero-feature">
+        <div class="hero-feature-icon">🧠</div>
+        <span>Powered by Gemini 2.5 Flash + MongoDB Atlas</span>
+      </div>
+      <div class="hero-feature">
+        <div class="hero-feature-icon">🔐</div>
+        <span>Google OAuth + session management</span>
+      </div>
+    </div>
+  </div>
 
-    <section class="auth-panel">
-        <div class="auth-card">
-            <h2 class="auth-heading">Sign in to continue</h2>
-            <p class="auth-subheading">Use local admin credentials or Google OAuth.</p>
+  <!-- Auth panel -->
+  <div class="auth-panel">
+    {% if flash %}
+    <div class="flash flash-{{ flash.level }}">{{ flash.message }}</div>
+    {% endif %}
 
-            <form action="/login/local" method="post" class="admin-login-form section-gap">
-                <label for="username">Username</label>
-                <input id="username" name="username" type="text" placeholder="Enter username" required>
-                <label for="password">Password</label>
-                <input id="password" name="password" type="password" placeholder="Enter password" required>
-                <button class="primary-btn full" type="submit">Login</button>
-            </form>
+    <div class="auth-logo">
+      <div class="auth-logo-icon">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 2L16 6V12L9 16L2 12V6L9 2Z" stroke="white" stroke-width="1.5" stroke-linejoin="round"/><circle cx="9" cy="9" r="2" fill="white"/></svg>
+      </div>
+      <div>
+        <span>Agentic RAG</span>
+        <span class="sidebar-logo-sub">Enterprise AI Workspace</span>
+      </div>
+    </div>
 
-            <div class="divider"><span>or continue with</span></div>
+    <h2 class="auth-heading">Welcome back</h2>
+    <p class="auth-subheading">Sign in to your workspace</p>
 
-            <div class="auth-actions">
-                <a class="secondary-btn" href="/login/google">Google Login</a>
-                <a class="secondary-btn" href="/signup/google">Google Sign Up</a>
-            </div>
+    <form action="/login/local" method="post" class="auth-form">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" id="username" name="username" type="text" placeholder="Enter username" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-input" id="password" name="password" type="password" placeholder="Enter password" required autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary btn-full" type="submit">Sign in</button>
+    </form>
 
-            <div class="auth-inline-note">
-                Need admin operations? <a href="/admin/login">Open Admin Login</a>
-            </div>
-        </div>
-    </section>
-</main>
+    <div class="auth-divider">or continue with</div>
+
+    <div class="auth-social">
+      <a class="btn btn-secondary" href="/login/google">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M15.68 8.18c0-.57-.05-1.12-.14-1.64H8v3.1h4.3a3.67 3.67 0 01-1.6 2.41v2h2.58c1.51-1.39 2.4-3.44 2.4-5.87z" fill="#4285F4"/><path d="M8 16c2.16 0 3.97-.71 5.3-1.93l-2.59-2a4.77 4.77 0 01-2.71.75 4.77 4.77 0 01-4.49-3.29H.84v2.06A8 8 0 008 16z" fill="#34A853"/><path d="M3.51 9.53A4.8 4.8 0 013.26 8c0-.53.09-1.04.25-1.53V4.41H.84A8 8 0 000 8c0 1.29.31 2.51.84 3.59l2.67-2.06z" fill="#FBBC05"/><path d="M8 3.18c1.22 0 2.31.42 3.17 1.24l2.38-2.38A8 8 0 00.84 4.41l2.67 2.06A4.77 4.77 0 018 3.18z" fill="#EA4335"/></svg>
+        Google Login
+      </a>
+      <a class="btn btn-secondary" href="/signup/google">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M15.68 8.18c0-.57-.05-1.12-.14-1.64H8v3.1h4.3a3.67 3.67 0 01-1.6 2.41v2h2.58c1.51-1.39 2.4-3.44 2.4-5.87z" fill="#4285F4"/><path d="M8 16c2.16 0 3.97-.71 5.3-1.93l-2.59-2a4.77 4.77 0 01-2.71.75 4.77 4.77 0 01-4.49-3.29H.84v2.06A8 8 0 008 16z" fill="#34A853"/><path d="M3.51 9.53A4.8 4.8 0 013.26 8c0-.53.09-1.04.25-1.53V4.41H.84A8 8 0 000 8c0 1.29.31 2.51.84 3.59l2.67-2.06z" fill="#FBBC05"/><path d="M8 3.18c1.22 0 2.31.42 3.17 1.24l2.38-2.38A8 8 0 00.84 4.41l2.67 2.06A4.77 4.77 0 018 3.18z" fill="#EA4335"/></svg>
+        Sign Up
+      </a>
+    </div>
+
+    <p class="auth-footer">
+      Need admin access? <a href="/admin/login">Admin Login →</a>
+    </p>
+  </div>
+</div>
 {% endblock %}

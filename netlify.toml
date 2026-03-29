@@ -1,8 +1,28 @@
 [build]
-  command = "pip install -r requirements.txt"
-  environment = { PYTHON_VERSION = "3.11", PIP_NO_CACHE_DIR = "1" }
+  command   = "pip install -r requirements.txt"
+  functions = "netlify/functions"
+  publish   = "web/static"
+
+[build.environment]
+  PYTHON_VERSION  = "3.11"
+  PIP_NO_CACHE_DIR = "1"
+
+[functions]
+  included_files = ["web/**", "services/**", "auth/**", "core/**", "app.py"]
+
+# Static assets served directly from CDN
+[[redirects]]
+  from   = "/static/*"
+  to     = "/static/:splat"
+  status = 200
+
+# All other routes → FastAPI function
+[[redirects]]
+  from   = "/*"
+  to     = "/.netlify/functions/api/:splat"
+  status = 200
 
 [dev]
-  command = "uvicorn app:app --host 0.0.0.0 --port 8000"
-  targetPort = 8000
-  port = 8888
+  command    = "uvicorn app:app --host 0.0.0.0 --port 8085"
+  targetPort = 8085
+  port       = 8888

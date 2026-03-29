@@ -1,127 +1,229 @@
 {% extends "base.html" %}
-
-{% block title %}Chat | AI Assistant{% endblock %}
-
+{% block title %}{{ current_title }} | Agentic RAG{% endblock %}
 {% block content %}
-<div class="app-shell">
-    <header class="top-nav">
-        <div>
-            <h1>AI Assistant Workspace</h1>
-            <p>Profile-aware chat with document intelligence</p>
+
+<div class="app">
+  <!-- ── Sidebar ──────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M8 1L14 4.5V11.5L8 15L2 11.5V4.5L8 1Z" stroke="white" stroke-width="1.4" stroke-linejoin="round"/>
+          <circle cx="8" cy="8" r="1.8" fill="white"/>
+        </svg>
+      </div>
+      <div>
+        <div class="sidebar-logo-text">Agentic RAG</div>
+        <span class="sidebar-logo-sub">AI Workspace</span>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <!-- New chat -->
+      <form action="/chat/new" method="post">
+        <button class="new-chat-btn" type="submit">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          New Chat
+        </button>
+      </form>
+
+      <!-- Knowledge base (admin only) -->
+      {% if is_admin %}
+      <div class="sidebar-kb">
+        <div class="sidebar-kb-header">
+          <span class="sidebar-kb-title">Knowledge Base</span>
+          <span class="sidebar-kb-badge {% if doc_count == 0 %}empty{% endif %}">
+            {{ doc_count }} chunks
+          </span>
         </div>
-        <div class="nav-actions">
-            <button class="secondary-btn" id="toggle-sidebar" type="button" aria-controls="left-panel" aria-expanded="false">Panels</button>
-            {% if is_admin %}
-            <a class="secondary-btn link-btn" href="/admin">Admin</a>
-            {% endif %}
-            <form action="/logout" method="post">
-                <button class="danger-btn" type="submit">Logout</button>
-            </form>
+        <form action="/documents/process" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="conversation_id" value="{{ conversation_id }}">
+          <label class="file-upload-label">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M2 5l4-4 4 4M1 10h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Upload PDF / TXT
+            <input type="file" name="files" multiple accept=".pdf,.txt" style="display:none" onchange="this.closest('form').submit()">
+          </label>
+        </form>
+        <div class="sidebar-kb-actions">
+          <form action="/documents/process" method="post" enctype="multipart/form-data" id="kb-process-form">
+            <input type="hidden" name="conversation_id" value="{{ conversation_id }}">
+            <button class="kb-btn" type="submit">Process Files</button>
+          </form>
+          <form action="/documents/clear" method="post">
+            <input type="hidden" name="conversation_id" value="{{ conversation_id }}">
+            <button class="kb-btn danger" type="submit">Clear All Documents</button>
+          </form>
         </div>
+      </div>
+      {% endif %}
+
+      <!-- Conversation history -->
+      <div class="sidebar-section-label">Conversations</div>
+      {% for conv in conversations %}
+      <div class="conv-item {% if conv.id == conversation_id %}active{% endif %}">
+        <a href="/chat?conversation_id={{ conv.id }}" title="{{ conv.title }}">{{ conv.title }}</a>
+        <form action="/chat/delete/{{ conv.id }}" method="post">
+          <button class="conv-delete" type="submit" aria-label="Delete">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Profile footer -->
+    <div class="sidebar-profile">
+      <div class="sidebar-avatar">
+        {% if user.profile_picture %}
+        <img src="{{ user.profile_picture }}" alt="Avatar">
+        {% else %}
+        {{ user.name[0] if user.name else "U" }}
+        {% endif %}
+      </div>
+      <div class="sidebar-profile-info">
+        <div class="sidebar-profile-name">{{ user.name }}</div>
+        <div class="sidebar-profile-meta">{{ user_stats }}</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Overlay for mobile -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- ── Main ────────────────────────────────── -->
+  <div class="main">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn btn-icon" id="menu-btn" aria-label="Toggle menu">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="4" width="14" height="1.5" rx=".75" fill="currentColor"/><rect x="2" y="8.25" width="14" height="1.5" rx=".75" fill="currentColor"/><rect x="2" y="12.5" width="14" height="1.5" rx=".75" fill="currentColor"/></svg>
+        </button>
+        <div class="topbar-title" id="chat-title">{{ current_title }}</div>
+      </div>
+      <div class="topbar-right">
+        <!-- Mode selector -->
+        <select class="mode-selector" id="mode-select">
+          <option value="Auto">⚡ Agentic</option>
+          <option value="RAG Only">📚 RAG Only</option>
+          <option value="Direct LLM">💬 Direct</option>
+        </select>
+
+        <!-- KB status -->
+        {% if doc_count > 0 %}
+        <div class="kb-status active">
+          <div class="kb-dot"></div>
+          <span>{{ doc_count }} docs</span>
+        </div>
+        {% else %}
+        <div class="kb-status inactive">
+          <div class="kb-dot"></div>
+          <span>No docs</span>
+        </div>
+        {% endif %}
+
+        {% if is_admin %}
+        <a class="btn btn-secondary btn-sm" href="/admin">Admin</a>
+        {% endif %}
+
+        <form action="/logout" method="post">
+          <button class="btn btn-danger btn-sm" type="submit">Logout</button>
+        </form>
+      </div>
     </header>
 
-    <div id="sidebar-backdrop" class="sidebar-backdrop" aria-hidden="true"></div>
-
-    <div class="workspace">
-        <aside class="left-panel" id="left-panel">
-            <div class="sidebar-head">
-                <h3>Workspace</h3>
-                <button id="close-sidebar" class="icon-btn" type="button" aria-label="Close panel">x</button>
-            </div>
-
-            <section class="profile-card">
-                <div class="avatar-wrap">
-                    {% if user.profile_picture %}
-                    <img src="{{ user.profile_picture }}" alt="Profile">
-                    {% else %}
-                    <div class="avatar-fallback">{{ user.name[0] if user.name else "U" }}</div>
-                    {% endif %}
-                </div>
-                <div>
-                    <h3>{{ user.name }}</h3>
-                    <p>{{ user.email }}</p>
-                    <span class="meta-pill">{{ user_stats }}</span>
-                </div>
-            </section>
-
-            <form action="/chat/new" method="post" class="section-gap">
-                <button class="primary-btn full" type="submit">+ New Chat</button>
-            </form>
-
-            {% if is_admin %}
-            <section class="panel-block">
-                <h4>Knowledge Base</h4>
-                <p>{{ doc_count }} chunks indexed</p>
-                <form action="/documents/process" method="post" enctype="multipart/form-data" class="stacked-form">
-                    <input type="hidden" name="conversation_id" value="{{ conversation_id }}">
-                    <input type="file" name="files" multiple accept=".pdf,.txt">
-                    <button type="submit">Process Files</button>
-                </form>
-                <form action="/documents/clear" method="post">
-                    <input type="hidden" name="conversation_id" value="{{ conversation_id }}">
-                    <button type="submit" class="muted-btn">Clear Documents</button>
-                </form>
-            </section>
-            {% endif %}
-
-            <section class="panel-block">
-                <h4>Chat History</h4>
-                <div class="conversation-list">
-                    {% for conv in conversations %}
-                    <div class="conversation-item {% if conv.id == conversation_id %}active{% endif %}">
-                        <a href="/chat?conversation_id={{ conv.id }}">{{ conv.title }}</a>
-                        <form action="/chat/delete/{{ conv.id }}" method="post">
-                            <button type="submit" aria-label="Delete conversation">x</button>
-                        </form>
-                    </div>
-                    {% endfor %}
-                </div>
-            </section>
-        </aside>
-
-        <main class="right-panel">
-            <section class="chat-header">
-                <div class="chat-title-wrap">
-                    <h2 id="conversation-title">{{ current_title }}</h2>
-                    <p class="chat-subline">Conversation ID: <span class="mono-id" id="conversation-id-text">{{ conversation_id }}</span></p>
-                </div>
-                <div class="mode-wrap">
-                    <label for="mode-select">Mode</label>
-                    <select id="mode-select">
-                        <option value="Auto">Auto</option>
-                        <option value="RAG Only">RAG Only</option>
-                        <option value="Direct LLM">Direct LLM</option>
-                    </select>
-                </div>
-            </section>
-
-            <section id="message-list" class="message-list">
-                {% if messages|length == 0 %}
-                <div class="empty-state">
-                    <h3>Start a conversation</h3>
-                    <p>Ask anything, or upload docs and ask document-specific questions.</p>
-                </div>
-                {% endif %}
-                {% for msg in messages %}
-                <article class="msg {{ msg.role }}">
-                    <div class="bubble">{{ msg.content }}</div>
-                </article>
-                {% endfor %}
-            </section>
-
-            <form id="chat-form" class="chat-form">
-                <input type="hidden" id="conversation-id" value="{{ conversation_id }}">
-                <textarea id="prompt-input" rows="2" placeholder="Type your message..."></textarea>
-                <button type="submit" class="primary-btn">Send</button>
-            </form>
-        </main>
+    {% if flash %}
+    <div style="padding:10px 20px 0">
+      <div class="flash flash-{{ flash.level }}">{{ flash.message }}</div>
     </div>
+    {% endif %}
+
+    <!-- Chat body -->
+    <div class="chat-body" id="chat-body">
+      {% if messages|length == 0 %}
+      <div class="empty-state" id="empty-state">
+        <div class="empty-logo">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path d="M14 3L24 8.5V19.5L14 25L4 19.5V8.5L14 3Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="14" cy="14" r="3" fill="white"/>
+          </svg>
+        </div>
+        <h2>How can I help you today?</h2>
+        <p>Ask anything — I'll search your documents or answer directly.</p>
+        <div class="suggestion-grid">
+          <button class="suggestion-card" data-prompt="Summarize the key points from the uploaded documents">
+            <span class="suggestion-card-icon">📋</span>
+            <span class="suggestion-card-text">Summarize documents</span>
+            <span class="suggestion-card-sub">Get a quick overview</span>
+          </button>
+          <button class="suggestion-card" data-prompt="What are the main topics covered in the knowledge base?">
+            <span class="suggestion-card-icon">🗺️</span>
+            <span class="suggestion-card-text">Explore topics</span>
+            <span class="suggestion-card-sub">Discover what's covered</span>
+          </button>
+          <button class="suggestion-card" data-prompt="Explain the most important concepts in detail">
+            <span class="suggestion-card-icon">💡</span>
+            <span class="suggestion-card-text">Key concepts</span>
+            <span class="suggestion-card-sub">Deep dive into ideas</span>
+          </button>
+          <button class="suggestion-card" data-prompt="Compare and contrast different approaches mentioned in the documents">
+            <span class="suggestion-card-icon">⚖️</span>
+            <span class="suggestion-card-text">Compare approaches</span>
+            <span class="suggestion-card-sub">Side-by-side analysis</span>
+          </button>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="message-list" id="message-list">
+        {% for msg in messages %}
+        <div class="msg-row {{ msg.role }}">
+          {% if msg.role == "assistant" %}
+          <div class="msg-avatar ai-avatar">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1.5L12 4.25V9.75L7 12.5L2 9.75V4.25L7 1.5Z" stroke="white" stroke-width="1.3" stroke-linejoin="round"/><circle cx="7" cy="7" r="1.5" fill="white"/></svg>
+          </div>
+          {% else %}
+          <div class="msg-avatar user-avatar">{{ user.name[0] if user.name else "U" }}</div>
+          {% endif %}
+          <div class="msg-body">
+            <div class="bubble">{{ msg.content }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Input area -->
+    <div class="input-area">
+      <div class="input-container">
+        <form id="chat-form">
+          <input type="hidden" id="conversation-id" value="{{ conversation_id }}">
+          <div class="input-row">
+            <textarea
+              id="prompt-input"
+              rows="1"
+              placeholder="Message Agentic RAG…"
+              maxlength="4000"
+              aria-label="Chat message"
+            ></textarea>
+            <button class="send-btn" type="submit" id="send-btn" aria-label="Send">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M9 3l5 5-5 5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="input-footer">
+            <span>Enter to send · Shift+Enter for new line</span>
+            <span class="char-count" id="char-count">0 / 4000</span>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-    window.__CHAT_BOOTSTRAP__ = {
-        conversationId: "{{ conversation_id }}",
-    };
+window.__BOOTSTRAP__ = {
+  conversationId: "{{ conversation_id }}",
+  userInitial: "{{ user.name[0] if user.name else 'U' }}"
+};
 </script>
-<script src="/static/js/chat.js?v=20260227b"></script>
+<script src="/static/js/chat.js?v=20260329c"></script>
 {% endblock %}

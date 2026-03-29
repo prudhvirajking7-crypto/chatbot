@@ -1,10 +1,12 @@
 import hashlib
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 from core.config import get_config
 
-load_dotenv(override=True)
+_ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=_ENV_FILE, override=True)
 
 
 def hash_password(password: str) -> str:
