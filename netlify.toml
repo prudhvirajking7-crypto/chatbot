@@ -11,6 +11,10 @@
 [functions]
   included_files = ["web/**", "services/**", "auth/**", "core/**", "app.py"]
 
+# Tell Netlify this is a Python function (required — bundler defaults to JS)
+[functions."api"]
+  runtime = "python3.8"
+
 # All routes → FastAPI function (Mangum reads path from Lambda event)
 [[redirects]]
   from   = "/*"
