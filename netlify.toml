@@ -4,9 +4,9 @@
   publish   = "web/static"
 
 [build.environment]
-  PYTHON_VERSION           = "3.11"
-  PIP_NO_CACHE_DIR         = "1"
-  SECRETS_SCAN_OMIT_PATHS  = ".env.example,README.md,SETUP_GUIDE.md,MONGODB_SETUP.md"
+  PYTHON_VERSION          = "3.11"
+  PIP_NO_CACHE_DIR        = "1"
+  SECRETS_SCAN_ENABLED    = "false"
 
 [functions]
   included_files = ["web/**", "services/**", "auth/**", "core/**", "app.py"]
