@@ -15,18 +15,20 @@ def hash_password(password: str) -> str:
 
 
 def check_credentials(username: str, password: str) -> bool:
-    """Validate admin credentials from secrets/env."""
-    admin_user = get_config("ADMIN_USERNAME", "Kotaraju")
+    """Validate admin credentials from environment variables."""
+    admin_user = get_config("ADMIN_USERNAME")
     admin_password = get_config("ADMIN_PASSWORD")
     admin_pass_hash = get_config("ADMIN_PASSWORD_HASH")
 
-    # Preferred local mode: plain password from env.
+    if not admin_user:
+        return False
+
+    # Preferred: plain password from env
     if admin_password not in (None, ""):
         return username == admin_user and password == admin_password
 
-    # Secondary mode: hashed password from env.
+    # Secondary: hashed password from env
     if admin_pass_hash not in (None, ""):
         return username == admin_user and hash_password(password) == admin_pass_hash
 
-    # Fallback bypass credentials requested by user (dev only).
-    return username == "Kotaraju" and password == "Kotaraju"
+    return False
